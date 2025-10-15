@@ -247,7 +247,6 @@
 //     }
 // }
 
-
 package com.example.hospital.ui;
 
 import com.example.hospital.model.User;
@@ -266,10 +265,26 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton btnLogout = new JButton("Đăng xuất");
+        top.add(btnLogout);
+        btnLogout.addActionListener(e -> doLogout());
+        add(top, BorderLayout.NORTH);
+
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("Thiết bị", new EquipmentPanel());
-        tabs.addTab("Bảo trì", new MaintenancePanel());
+        tabs.addTab("Bảo trì", new MaintenancePanel(currentUser));
 
         add(tabs, BorderLayout.CENTER);
+    }
+
+    private void doLogout() {
+        int c = JOptionPane.showConfirmDialog(this, "Đăng xuất khỏi hệ thống?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        if (c == JOptionPane.YES_OPTION) {
+            SwingUtilities.invokeLater(() -> {
+                new LoginFrame().setVisible(true);
+            });
+            dispose();
+        }
     }
 }

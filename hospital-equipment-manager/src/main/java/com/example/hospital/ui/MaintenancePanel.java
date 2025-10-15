@@ -9,7 +9,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.SQLException;
-import java.time.LocalDate;
+// import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,10 +20,16 @@ public class MaintenancePanel extends JPanel {
     private JTable table;
     private DefaultTableModel model;
     private Map<Integer, Equipment> equipmentCache = new HashMap<>();
+    private com.example.hospital.model.User currentUser;
 
     public MaintenancePanel() {
+        this(null);
+    }
+
+    public MaintenancePanel(com.example.hospital.model.User user) {
+        this.currentUser = user;
         setLayout(new BorderLayout());
-        model = new DefaultTableModel(new Object[] { "ID", "Equipment", "Schedule", "Done", "Note" }, 0) {
+        model = new DefaultTableModel(new Object[] { "ID", "Equipment", "Schedule", "Done", "Note", "Assigned" }, 0) {
             public boolean isCellEditable(int r, int c) {
                 return false;
             }
@@ -32,13 +38,20 @@ public class MaintenancePanel extends JPanel {
         add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel btns = new JPanel();
-        JButton btnAdd = new JButton("Thêm");
+        JButton btnAdd = new JButton("Thêm yêu cầu");
         JButton btnEdit = new JButton("Sửa");
         JButton btnDelete = new JButton("Xóa");
+        JButton btnAccept = new JButton("Duyệt / Chấp nhận");
+        JButton btnInspect = new JButton("Kiểm tra");
         JButton btnRefresh = new JButton("Làm mới");
         btns.add(btnAdd);
         btns.add(btnEdit);
         btns.add(btnDelete);
+        // show admin actions only if user is admin
+        if (currentUser != null && "ADMIN".equalsIgnoreCase(currentUser.getRole())) {
+            btns.add(btnAccept);
+            btns.add(btnInspect);
+        }
         btns.add(btnRefresh);
         add(btns, BorderLayout.SOUTH);
 
@@ -62,6 +75,8 @@ public class MaintenancePanel extends JPanel {
             }
         });
         btnDelete.addActionListener(e -> deleteSelected());
+        btnAccept.addActionListener(e -> acceptSelected());
+        btnInspect.addActionListener(e -> inspectSelected());
         btnRefresh.addActionListener(e -> loadData());
 
         loadData();
@@ -99,7 +114,7 @@ public class MaintenancePanel extends JPanel {
                             equipmentCache.put(eq.getId(), eq);
                         model.addRow(new Object[] { m.getId(), eq == null ? m.getEquipmentId() : eq.getName(),
                                 m.getScheduleDate() == null ? "" : m.getScheduleDate().toString(), m.isCompleted(),
-                                m.getNote() });
+                                m.getNote(), m.getAssignedTo() == null ? "" : m.getAssignedTo() });
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -132,6 +147,45 @@ public class MaintenancePanel extends JPanel {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Lỗi xóa: " + ex.getMessage());
             }
+        }
+    }
+
+    private void acceptSelected() {
+        int r = table.getSelectedRow();
+        if (r < 0) {
+            JOptionPane.showMessageDialog(this, "Chọn 1 công việc");
+            return;
+        }
+        int id = (int) model.getValueAt(r, 0);
+        String note = JOptionPane.showInputDialog(this, "Ghi chú kiểm tra/duyệt (optional):");
+        String assigned = JOptionPane.showInputDialog(this, "Chỉ định cho (tên nhân viên hoặc bộ phận):");
+        try {
+            String acceptedBy = currentUser == null ? "" : currentUser.getUsername();
+            maintDAO.accept(id, acceptedBy, note == null ? "" : note, assigned == null ? "" : assigned);
+            loadData();
+            JOptionPane.showMessageDialog(this, "Đã duyệt và chỉ định công việc #" + id);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage());
+        }
+    }
+
+    private void inspectSelected() {
+        // For simplicity, inspect flows same as accept (mark inspected)
+        int r = table.getSelectedRow();
+        if (r < 0) {
+            JOptionPane.showMessageDialog(this, "Chọn 1 công việc");
+            return;
+        }
+        int id = (int) model.getValueAt(r, 0);
+        String note = JOptionPane.showInputDialog(this, "Ghi chú kiểm tra (optional):");
+        try {
+            maintDAO.inspect(id, note == null ? "" : note);
+            loadData();
+            JOptionPane.showMessageDialog(this, "Đã đánh dấu kiểm tra cho công việc #" + id);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage());
         }
     }
 }

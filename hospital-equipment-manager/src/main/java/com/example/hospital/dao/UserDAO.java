@@ -21,7 +21,6 @@
 //     }
 // }
 
-
 package com.example.hospital.dao;
 
 import com.example.hospital.db.DBUtil;
@@ -39,7 +38,15 @@ public class UserDAO {
             p.setString(2, password);
             try (ResultSet rs = p.executeQuery()) {
                 if (rs.next()) {
-                    return new User(rs.getInt("id"), rs.getString("username"), rs.getString("fullname"));
+                    String role = null;
+                    try {
+                        role = rs.getString("role");
+                    } catch (Exception ex) {
+                        // ignore if column missing
+                    }
+                    if (role == null && "admin".equalsIgnoreCase(rs.getString("username")))
+                        role = "ADMIN";
+                    return new User(rs.getInt("id"), rs.getString("username"), rs.getString("fullname"), role);
                 }
             }
         } catch (Exception e) {

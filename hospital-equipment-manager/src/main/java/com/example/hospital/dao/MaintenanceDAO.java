@@ -66,14 +66,13 @@
 //     }
 // }
 
-
 package com.example.hospital.dao;
 
 import com.example.hospital.db.DBUtil;
 import com.example.hospital.model.MaintenanceTask;
 
 import java.sql.*;
-import java.time.LocalDate;
+// import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,6 +105,26 @@ public class MaintenanceDAO {
         }
     }
 
+    public void accept(int id, String acceptedBy, String inspectionNote, String assignedTo) throws SQLException {
+        String sql = "UPDATE maintenance SET accepted = TRUE, inspected = TRUE, accepted_by = ?, inspection_note = ?, assigned_to = ?, acceptance_date = CURRENT_DATE WHERE id = ?";
+        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setString(1, acceptedBy);
+            p.setString(2, inspectionNote);
+            p.setString(3, assignedTo);
+            p.setInt(4, id);
+            p.executeUpdate();
+        }
+    }
+
+    public void inspect(int id, String inspectionNote) throws SQLException {
+        String sql = "UPDATE maintenance SET inspected = TRUE, inspection_note = ? WHERE id = ?";
+        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setString(1, inspectionNote);
+            p.setInt(2, id);
+            p.executeUpdate();
+        }
+    }
+
     public void delete(int id) throws SQLException {
         String sql = "DELETE FROM maintenance WHERE id = ?";
         try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
@@ -128,6 +147,11 @@ public class MaintenanceDAO {
                 m.setScheduleDate(d == null ? null : d.toLocalDate());
                 m.setCompleted(rs.getBoolean("completed"));
                 m.setNote(rs.getString("note"));
+                try {
+                    m.setAssignedTo(rs.getString("assigned_to"));
+                } catch (Exception ex) {
+                    // column might not exist in older schemas
+                }
                 list.add(m);
             }
         }

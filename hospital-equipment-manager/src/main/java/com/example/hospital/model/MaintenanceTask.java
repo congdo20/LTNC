@@ -74,7 +74,12 @@ public class MaintenanceTask {
     private LocalDate scheduleDate;
     private boolean completed;
     private String note;
-
+    private boolean inspected;         
+    private boolean accepted;        
+    private String inspectionNote;     
+    private String acceptedBy;         
+    private LocalDate acceptanceDate;
+    private String assignedTo; // who/team is assigned to perform the maintenance
     public MaintenanceTask() {
     }
 
@@ -116,5 +121,50 @@ public class MaintenanceTask {
 
     public void setNote(String note) {
         this.note = note;
+    }
+    public boolean isInspected() { 
+        return inspected; 
+    }
+
+    public void setInspected(boolean inspected) { 
+        this.inspected = inspected; 
+    }
+
+    public boolean isAccepted() { 
+        return accepted; 
+    }
+
+    public void setAccepted(boolean accepted) { 
+        this.accepted = accepted; 
+    }
+
+    public String getInspectionNote() { 
+        return inspectionNote; 
+    }
+
+    public void setInspectionNote(String inspectionNote) { 
+        this.inspectionNote = inspectionNote; 
+    }
+
+    public String getAcceptedBy() { 
+        return acceptedBy; 
+    }
+    public void setAcceptedBy(String acceptedBy) { 
+        this.acceptedBy = acceptedBy; 
+    }
+
+    public LocalDate getAcceptanceDate() { 
+        return acceptanceDate; 
+    }
+    public void setAcceptanceDate(LocalDate acceptanceDate) { 
+        this.acceptanceDate = acceptanceDate; 
+    }
+
+    public String getAssignedTo() {
+        return assignedTo;
+    }
+
+    public void setAssignedTo(String assignedTo) {
+        this.assignedTo = assignedTo;
     }
 }
