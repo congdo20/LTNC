@@ -105,26 +105,6 @@ public class MaintenanceDAO {
         }
     }
 
-    public void accept(int id, String acceptedBy, String inspectionNote, String assignedTo) throws SQLException {
-        String sql = "UPDATE maintenance SET accepted = TRUE, inspected = TRUE, accepted_by = ?, inspection_note = ?, assigned_to = ?, acceptance_date = CURRENT_DATE WHERE id = ?";
-        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
-            p.setString(1, acceptedBy);
-            p.setString(2, inspectionNote);
-            p.setString(3, assignedTo);
-            p.setInt(4, id);
-            p.executeUpdate();
-        }
-    }
-
-    public void inspect(int id, String inspectionNote) throws SQLException {
-        String sql = "UPDATE maintenance SET inspected = TRUE, inspection_note = ? WHERE id = ?";
-        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
-            p.setString(1, inspectionNote);
-            p.setInt(2, id);
-            p.executeUpdate();
-        }
-    }
-
     public void delete(int id) throws SQLException {
         String sql = "DELETE FROM maintenance WHERE id = ?";
         try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
