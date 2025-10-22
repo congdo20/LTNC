@@ -49,8 +49,14 @@ public class UserDAO {
                     } catch (Exception ex) {
                         // ignore if column missing
                     }
-                    if (role == null && "admin".equalsIgnoreCase(rs.getString("username")))
-                        role = "ADMIN";
+                    if (role == null) {
+                        // if role column missing or NULL, default to regular user to avoid elevating
+                        // privileges
+                        role = "USER";
+                        // debug: print loaded role for troubleshooting
+                        System.out.println("[UserDAO] login succeeded: id=" + rs.getInt("id") + ", username="
+                                + rs.getString("username") + ", role=" + role);
+                    }
                     return new User(rs.getInt("id"), rs.getString("username"), rs.getString("fullname"), role);
                 }
             }
