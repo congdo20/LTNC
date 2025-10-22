@@ -1,6 +1,8 @@
+com\example\hospital\ui\UserManagementPanel$UserDialog.class
 com\example\hospital\ui\MaintenancePanel$1.class
 com\example\hospital\ui\MaintenanceDialog.class
 com\example\hospital\model\User.class
+com\example\hospital\ui\UserManagementPanel.class
 com\example\hospital\model\Equipment.class
 com\example\hospital\model\Item.class
 com\example\hospital\model\MaintenanceTask.class
@@ -14,6 +16,7 @@ com\example\hospital\MainApp.class
 com\example\hospital\dao\InspectionDAO.class
 com\example\hospital\ui\MaintenancePanel$2.class
 com\example\hospital\dao\ItemDAO.class
+com\example\hospital\ui\UserManagementPanel$1.class
 com\example\hospital\ui\EquipmentPanel$4.class
 com\example\hospital\ui\EquipmentPanel.class
 com\example\hospital\ui\InspectionPanel.class
