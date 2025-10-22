@@ -63,7 +63,6 @@
 //     }
 // }
 
-
 package com.example.hospital.model;
 
 import java.time.LocalDate;
@@ -74,6 +73,8 @@ public class MaintenanceTask {
     private LocalDate scheduleDate;
     private boolean completed;
     private String note;
+    private String assignedTo;
+
     public MaintenanceTask() {
     }
 
@@ -115,5 +116,13 @@ public class MaintenanceTask {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public String getAssignedTo() {
+        return assignedTo;
+    }
+
+    public void setAssignedTo(String assignedTo) {
+        this.assignedTo = assignedTo;
     }
 }

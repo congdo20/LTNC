@@ -112,6 +112,12 @@
         schedule_date DATE,
         completed BOOLEAN DEFAULT FALSE,
         note VARCHAR(255),
+        -- added to store who is assigned to handle the maintenance and who accepted it
+        assigned_to VARCHAR(100),
+        accepted_by VARCHAR(100),
+        acceptance_date DATE,
+        -- flag to mark that an inspection was performed
+        inspected BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (equipment_id) REFERENCES equipment(id)
     );
     -- Inspection tasks: uses equipment_id (as DAO expects)

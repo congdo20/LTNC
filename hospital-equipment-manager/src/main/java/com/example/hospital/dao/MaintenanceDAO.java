@@ -137,4 +137,24 @@ public class MaintenanceDAO {
         }
         return list;
     }
+
+    public void accept(int id, String acceptedBy, String note, String assignedTo) throws SQLException {
+        String sql = "UPDATE maintenance SET completed = FALSE, note = ?, assigned_to = ?, accepted_by = ? WHERE id = ?";
+        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setString(1, note == null ? "" : note);
+            p.setString(2, assignedTo == null ? "" : assignedTo);
+            p.setString(3, acceptedBy == null ? "" : acceptedBy);
+            p.setInt(4, id);
+            p.executeUpdate();
+        }
+    }
+
+    public void inspect(int id, String note) throws SQLException {
+        String sql = "UPDATE maintenance SET note = ?, inspected = TRUE WHERE id = ?";
+        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setString(1, note == null ? "" : note);
+            p.setInt(2, id);
+            p.executeUpdate();
+        }
+    }
 }
