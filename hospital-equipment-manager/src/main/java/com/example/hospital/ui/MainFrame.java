@@ -274,6 +274,10 @@ public class MainFrame extends JFrame {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("Thiết bị", new EquipmentPanel());
         tabs.addTab("Bảo trì", new MaintenancePanel(currentUser));
+        // show user management only for admins
+        if (currentUser != null && "ADMIN".equalsIgnoreCase(currentUser.getRole())) {
+            tabs.addTab("Users", new UserManagementPanel());
+        }
 
         add(tabs, BorderLayout.CENTER);
     }

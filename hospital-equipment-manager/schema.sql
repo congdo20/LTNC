@@ -111,16 +111,29 @@
         equipment_id INT,
         schedule_date DATE,
         completed BOOLEAN DEFAULT FALSE,
-        inspected BOOLEAN DEFAULT FALSE,
-        accepted BOOLEAN DEFAULT FALSE,
-        inspection_note TEXT,
-        accepted_by VARCHAR(100),
-        assigned_to VARCHAR(100),
-        acceptance_date DATE,
         note VARCHAR(255),
+        -- added to store who is assigned to handle the maintenance and who accepted it
+        assigned_to VARCHAR(100),
+        accepted_by VARCHAR(100),
+        acceptance_date DATE,
+        -- flag to mark that an inspection was performed
+        inspected BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (equipment_id) REFERENCES equipment(id)
     );
-
+    -- Inspection tasks: uses equipment_id (as DAO expects)
+    CREATE TABLE inspection (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        maintenance_id INT NOT NULL,
+        equipment_id INT NOT NULL,
+        inspection_date DATE NOT NULL,
+        inspector VARCHAR(100),
+        result BOOLEAN,
+        note TEXT,
+        accepted_by VARCHAR(100),
+        acceptance_date DATE,
+        FOREIGN KEY (maintenance_id) REFERENCES maintenance(id),
+        FOREIGN KEY (equipment_id) REFERENCES equipment(id)
+    );   
     -- Seed admin user (replace password with hashed in production)
     INSERT INTO users(username, password, fullname, role)
     VALUES ('admin', '123456', 'Quản trị hệ thống', 'ADMIN');
