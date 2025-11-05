@@ -3,11 +3,11 @@ package com.example.hospital.ui;
 import javax.swing.JComboBox;
 import javax.swing.*;
 
-// Add import for MaintenanceTask
-import com.example.hospital.model.MaintenanceTask;
 import com.example.hospital.dao.MaintenanceDAO;
+import com.example.hospital.models.Equipment;
+import com.example.hospital.models.MaintenanceTask;
 import com.example.hospital.dao.EquipmentDAO;
-import com.example.hospital.model.Equipment;
+
 import java.awt.Window;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;

@@ -69,7 +69,7 @@
 package com.example.hospital.dao;
 
 import com.example.hospital.db.DBUtil;
-import com.example.hospital.model.MaintenanceTask;
+import com.example.hospital.models.MaintenanceTask;
 
 import java.sql.*;
 // import java.time.LocalDate;

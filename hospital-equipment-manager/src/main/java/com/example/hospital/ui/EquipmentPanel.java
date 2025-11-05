@@ -2,8 +2,8 @@ package com.example.hospital.ui;
 
 import com.example.hospital.dao.EquipmentDAO;
 import com.example.hospital.dao.MaintenanceDAO;
-import com.example.hospital.model.Equipment;
-import com.example.hospital.model.MaintenanceTask;
+import com.example.hospital.models.Equipment;
+import com.example.hospital.models.MaintenanceTask;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

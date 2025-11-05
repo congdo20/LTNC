@@ -1,7 +1,8 @@
 package com.example.hospital.ui;
 
 import com.example.hospital.dao.InspectionDAO;
-import com.example.hospital.model.InspectionTask;
+import com.example.hospital.models.InspectionTask;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;

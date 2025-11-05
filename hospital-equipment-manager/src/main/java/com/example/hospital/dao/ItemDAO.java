@@ -1,7 +1,7 @@
 package com.example.hospital.dao;
 
 import com.example.hospital.db.DBUtil;
-import com.example.hospital.model.Item;
+import com.example.hospital.models.Item;
 
 import java.sql.*;
 // import java.time.LocalDate;

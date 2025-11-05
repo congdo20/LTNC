@@ -1,7 +1,7 @@
 package com.example.hospital.ui;
 
 import com.example.hospital.dao.UserDAO;
-import com.example.hospital.model.User;
+import com.example.hospital.models.User;
 
 import javax.swing.*;
 import java.awt.*;
