@@ -103,12 +103,12 @@ public class MainFrame extends JFrame {
 
         if (user.isTruongKhoa()) {
             tabs.addTab("Thiết bị khoa/viện", new DeptEquipPanel(currentUser));
-            tabs.addTab("Yêu cầu bảo trì", new RequestPanel());
+            tabs.addTab("Yêu cầu bảo trì", new RequestPanel(currentUser));
         }
 
         if (user.isQLThietBi()) {
             tabs.addTab("Thiết bị", new EquipmentPanel());
-            tabs.addTab("Yêu cầu bảo trì", new RequestPanel());
+            tabs.addTab("Yêu cầu bảo trì", new RequestPanel(currentUser));
             tabs.addTab("Lên kế hoạch", new PlanPanel());
             tabs.addTab("Phân công", new AssignPanel());
         }
