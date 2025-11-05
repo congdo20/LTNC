@@ -1,38 +1,201 @@
+// package com.example.hospital.dao;
+
+// import com.example.hospital.db.DBUtil;
+// import com.example.hospital.models.User;
+// import com.example.hospital.models.User.Role;
+// import java.sql.*;
+// import java.util.ArrayList;
+// import java.util.List;
+
+// public class UserDAO {
+
+//     public User login(String username, String password) {
+//         String sql = "SELECT id, username, fullname, role FROM users WHERE username=? AND password=?";
+
+//         try (Connection c = DBUtil.getConnection();
+//                 PreparedStatement p = c.prepareStatement(sql)) {
+
+//             p.setString(1, username);
+//             p.setString(2, password);
+
+//             try (ResultSet rs = p.executeQuery()) {
+//                 if (rs.next()) {
+//                     Role role = Role.valueOf(rs.getString("role"));
+//                     return new User(
+//                             rs.getInt("id"),
+//                             rs.getString("username"),
+//                             rs.getString("fullname"),
+//                             role);
+//                 }
+//             }
+
+//         } catch (Exception e) {
+//             e.printStackTrace();
+//         }
+
+//         return null;
+//     }
+
+// }
+
 package com.example.hospital.dao;
 
 import com.example.hospital.db.DBUtil;
 import com.example.hospital.models.User;
-import com.example.hospital.models.User.Role;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserDAO {
 
-    public User login(String username, String password) {
-        String sql = "SELECT id, username, fullname, role FROM users WHERE username=? AND password=?";
+    public void create(User user, String password) throws SQLException {
+        String sql = "INSERT INTO users(username, password, fullname, role) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DBUtil.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, user.getUsername());
+            ps.setString(2, password);
+            ps.setString(3, user.getFullname());
+            ps.setString(4, user.getRole().name());
+            ps.executeUpdate();
+        }
+    }
 
-        try (Connection c = DBUtil.getConnection();
-                PreparedStatement p = c.prepareStatement(sql)) {
-
-            p.setString(1, username);
-            p.setString(2, password);
-
-            try (ResultSet rs = p.executeQuery()) {
-                if (rs.next()) {
-                    Role role = Role.valueOf(rs.getString("role"));
-                    return new User(
-                            rs.getInt("id"),
-                            rs.getString("username"),
-                            rs.getString("fullname"),
-                            role);
-                }
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void update(User user, String password) throws SQLException {
+        String sql;
+        if (password == null || password.isEmpty()) {
+            sql = "UPDATE users SET username=?, fullname=?, role=? WHERE id=?";
+        } else {
+            sql = "UPDATE users SET username=?, password=?, fullname=?, role=? WHERE id=?";
         }
 
+        try (Connection conn = DBUtil.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            int idx = 1;
+            ps.setString(idx++, user.getUsername());
+            if (password != null && !password.isEmpty())
+                ps.setString(idx++, password);
+            ps.setString(idx++, user.getFullname());
+            ps.setString(idx++, user.getRole().name());
+            ps.setInt(idx, user.getId());
+            ps.executeUpdate();
+        }
+    }
+
+    public void delete(int id) throws SQLException {
+        String sql = "DELETE FROM users WHERE id = ?";
+        try (Connection conn = DBUtil.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+        }
+    }
+
+    public List<User> findAll() throws SQLException {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT * FROM users";
+        try (Connection conn = DBUtil.getConnection();
+                Statement st = conn.createStatement();
+                ResultSet rs = st.executeQuery(sql)) {
+
+            // while (rs.next()) {
+            //     User u = new User();
+            //     u.setId(rs.getInt("id"));
+            //     u.setUsername(rs.getString("username"));
+            //     u.setFullname(rs.getString("fullname"));
+            //     u.setRole(User.Role.valueOf(rs.getString("role")));
+            //     list.add(u);
+            // }
+
+            while (rs.next()) {
+                User u = new User();
+                u.setId(rs.getInt("id"));
+                u.setUsername(rs.getString("username"));
+                u.setFullname(rs.getString("fullname"));
+                u.setRole(User.Role.valueOf(rs.getString("role")));
+
+                int dep = rs.getInt("department_id");
+                u.setDepartmentId(rs.wasNull() ? null : dep); // ✅ thêm
+
+                list.add(u);
+            }
+
+        }
+        return list;
+    }
+
+    public User findById(int id) throws SQLException {
+        String sql = "SELECT * FROM users WHERE id=?";
+        try (Connection conn = DBUtil.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User u = new User();
+                    u.setId(rs.getInt("id"));
+                    u.setUsername(rs.getString("username"));
+                    u.setFullname(rs.getString("fullname"));
+                    u.setRole(User.Role.valueOf(rs.getString("role")));
+
+                    int dep = rs.getInt("department_id");
+                    u.setDepartmentId(rs.wasNull() ? null : dep);
+
+                    return u;
+                }
+            }
+        }
         return null;
     }
+
+    // public User login(String username, String password) throws SQLException {
+    //     String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+    //     try (Connection conn = DBUtil.getConnection();
+    //             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+    //         ps.setString(1, username);
+    //         ps.setString(2, password);
+
+    //         try (ResultSet rs = ps.executeQuery()) {
+    //             if (rs.next()) {
+    //                 User u = new User();
+    //                 u.setId(rs.getInt("id"));
+    //                 u.setUsername(rs.getString("username"));
+    //                 u.setFullname(rs.getString("fullname"));
+    //                 u.setRole(User.Role.valueOf(rs.getString("role")));
+    //                 return u;
+    //             }
+    //         }
+    //     }
+    //     return null;
+    // }
+
+
+    public User login(String username, String password) throws SQLException {
+        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+
+        try (Connection conn = DBUtil.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            ps.setString(2, password);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User u = new User();
+                    u.setId(rs.getInt("id"));
+                    u.setUsername(rs.getString("username"));
+                    u.setFullname(rs.getString("fullname"));
+                    u.setRole(User.Role.valueOf(rs.getString("role")));
+
+                    int dep = rs.getInt("department_id");
+                    u.setDepartmentId(rs.wasNull() ? null : dep); // ✅ thêm
+
+                    return u;
+                }
+            }
+        }
+        return null;
+    }
+
 }

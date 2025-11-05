@@ -63,6 +63,7 @@ public class User {
     private String password;
     private String fullname;
     private Role role;
+    private Integer departmentId;
 
     public enum Role {
         ADMIN, TRUONG_KHOA, QL_THIET_BI, NV_BAO_TRI
@@ -124,6 +125,14 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public Integer getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Integer departmentId) {
+        this.departmentId = departmentId;
     }
 
     public boolean isAdmin() {
