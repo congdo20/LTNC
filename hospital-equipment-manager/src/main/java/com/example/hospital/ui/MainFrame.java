@@ -119,7 +119,6 @@ public class MainFrame extends JFrame {
 
     private void buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
-
         JLabel lbUser = new JLabel(
                 "Người dùng: " + currentUser.getFullname() +
                         "  |  Chức vụ: " + currentUser.getRole());
@@ -127,10 +126,50 @@ public class MainFrame extends JFrame {
         JButton btnLogout = new JButton("Đăng xuất");
         btnLogout.addActionListener(e -> doLogout());
 
+        // notifications button with unread count
+        JButton btnNotifications = new JButton("Thông báo");
+        btnNotifications.addActionListener(e -> showNotifications());
+
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        right.add(btnNotifications);
+        right.add(btnLogout);
+
         header.add(lbUser, BorderLayout.WEST);
-        header.add(btnLogout, BorderLayout.EAST);
+        header.add(right, BorderLayout.EAST);
+
+        // initial unread count update
+        updateNotificationCount(btnNotifications);
 
         add(header, BorderLayout.NORTH);
+    }
+
+    private void updateNotificationCount(JButton btn) {
+        try {
+            if (currentUser == null)
+                return;
+            int c = new com.example.hospital.dao.NotificationDAO().countUnreadForUser(currentUser.getId());
+            btn.setText("Thông báo (" + c + ")");
+        } catch (Exception ex) {
+            // ignore
+        }
+    }
+
+    private void showNotifications() {
+        if (currentUser == null)
+            return;
+        NotificationsPanel panel = new NotificationsPanel(currentUser.getId());
+        JDialog dlg = new JDialog(this, "Thông báo", true);
+        dlg.getContentPane().add(panel);
+        dlg.setSize(600, 400);
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+        // after closing, update header count
+        // find the notifications button and update it
+        // quick approach: rebuild header
+        getContentPane().remove(0);
+        buildHeader();
+        revalidate();
+        repaint();
     }
 
     private void doLogout() {

@@ -1,4 +1,6 @@
 c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\MainApp.java
+c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\dao\NotificationDAO.java
+c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\models\Notification.java
 c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\dao\TestInsert.java
 c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\ui\panels\TaskPanel.java
 c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\ui\MaintenancePanel.java
@@ -23,6 +25,7 @@ c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\
 c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\dao\ItemDAO.java
 c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\ui\panels\RequestPanel.java
 c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\db\DBUtil.java
+c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\ui\panels\NotificationsPanel.java
 c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\ui\LoginFrame.java
 c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\ui\MaintenanceRequestFormSwing.java
 c:\Users\trinhdo\Code\LTNC\hospital-equipment-manager\src\main\java\com\example\hospital\util\UIUtil.java

@@ -171,6 +171,43 @@ public class MaintenanceDAO {
         return list;
     }
 
+    /**
+     * Find maintenance plans that have been assigned to a specific technician.
+     */
+    public List<MaintenanceTask> findPlansAssignedToTechnician(int technicianId) throws SQLException {
+        List<MaintenanceTask> list = new ArrayList<>();
+        String sql = "SELECT p.* FROM maintenance_plans p JOIN maintenance_records r ON p.id = r.plan_id WHERE r.technician_id = ? ORDER BY p.scheduled_start DESC";
+        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, technicianId);
+            try (ResultSet rs = p.executeQuery()) {
+                while (rs.next()) {
+                    MaintenanceTask m = new MaintenanceTask();
+                    m.setId(rs.getInt("id"));
+                    m.setEquipmentId(rs.getInt("equipment_id"));
+                    Date d = rs.getDate("scheduled_start");
+                    m.setScheduleDate(d == null ? null : d.toLocalDate());
+                    String status = null;
+                    try {
+                        status = rs.getString("status");
+                    } catch (Exception ex) {
+                    }
+                    m.setCompleted("HOAN_THANH".equals(status));
+                    m.setNote(rs.getString("note"));
+                    try {
+                        m.setRequestId(rs.getInt("request_id"));
+                    } catch (Exception ex) {
+                    }
+                    try {
+                        m.setPlannerId(rs.getInt("planner_id"));
+                    } catch (Exception ex) {
+                    }
+                    list.add(m);
+                }
+            }
+        }
+        return list;
+    }
+
     public void accept(int id, String acceptedBy, String note, String assignedTo) throws SQLException {
         String sql = "UPDATE maintenance_plans SET status = 'DANG_THUC_HIEN', note = ? WHERE id = ?";
         try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
@@ -242,5 +279,55 @@ public class MaintenanceDAO {
             }
         }
         return null;
+    }
+
+    /**
+     * Mark a plan completed, update its status and notify the requester of the
+     * linked maintenance request.
+     */
+    public void markPlanCompleted(int planId) throws SQLException {
+        // 1) update plan status
+        String upd = "UPDATE maintenance_plans SET status = 'HOAN_THANH' WHERE id = ?";
+        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(upd)) {
+            p.setInt(1, planId);
+            p.executeUpdate();
+        }
+
+        // 2) find request_id for the plan
+        Integer requestId = null;
+        String q = "SELECT request_id FROM maintenance_plans WHERE id = ?";
+        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(q)) {
+            p.setInt(1, planId);
+            try (ResultSet rs = p.executeQuery()) {
+                if (rs.next()) {
+                    int rid = rs.getInt(1);
+                    requestId = rs.wasNull() ? null : rid;
+                }
+            }
+        }
+
+        if (requestId == null)
+            return; // nothing to notify
+
+        // 3) find requester id from maintenance_requests
+        Integer requesterId = null;
+        String q2 = "SELECT requester_id FROM maintenance_requests WHERE id = ?";
+        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(q2)) {
+            p.setInt(1, requestId);
+            try (ResultSet rs = p.executeQuery()) {
+                if (rs.next()) {
+                    int uid = rs.getInt(1);
+                    requesterId = rs.wasNull() ? null : uid;
+                }
+            }
+        }
+
+        if (requesterId == null)
+            return;
+
+        // 4) create notification
+        com.example.hospital.dao.NotificationDAO nd = new com.example.hospital.dao.NotificationDAO();
+        String message = "Yêu cầu bảo trì (ID=" + requestId + ") của bạn đã được hoàn thành.";
+        nd.createNotification(requesterId, message, requestId);
     }
 }

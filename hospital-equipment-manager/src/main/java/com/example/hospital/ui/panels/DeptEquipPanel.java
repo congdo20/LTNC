@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 import com.example.hospital.dao.EquipmentDAO;
+import com.example.hospital.dao.DepartmentDAO;
 import com.example.hospital.models.Equipment;
 import com.example.hospital.models.User;
 import com.example.hospital.util.ImageUtil;
@@ -16,6 +17,7 @@ public class DeptEquipPanel extends JPanel {
 
     private JTable table;
     private EquipmentDAO dao = new EquipmentDAO();
+    private DepartmentDAO depDao = new DepartmentDAO();
     private JLabel imagePreview;
 
     public DeptEquipPanel(User user) {
@@ -79,9 +81,20 @@ public class DeptEquipPanel extends JPanel {
             model.setRowCount(0);
 
             for (Equipment e : list) {
+                String deptName = e.getDepartmentId() == null ? "" : String.valueOf(e.getDepartmentId());
+                try {
+                    if (e.getDepartmentId() != null) {
+                        String dn = depDao.findNameById(e.getDepartmentId());
+                        if (dn != null)
+                            deptName = dn;
+                    }
+                } catch (Exception ex) {
+                    // ignore
+                }
+
                 model.addRow(new Object[] {
                         e.getId(), e.getCode(), e.getName(), e.getManufacturer(),
-                        e.getYearOfUse(), e.getStatus(), e.getDepartmentId()
+                        e.getYearOfUse(), e.getStatus(), deptName
                 });
             }
         } catch (SQLException e) {

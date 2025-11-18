@@ -138,3 +138,14 @@ ADD COLUMN last_maintenance DATE;
 ALTER TABLE equipment
 ADD COLUMN image_path VARCHAR(255);
 
+-- notifications table: stores messages for users (created when plans complete, etc.)
+CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    message TEXT NOT NULL,
+    related_request_id INT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_read TINYINT(1) DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
