@@ -300,6 +300,7 @@ public class EquipmentDAO {
         e.setYearOfUse(rs.getInt("year_of_use"));
         e.setStatus(rs.getString("status"));
         e.setDepartmentId(rs.getInt("department_id"));
+        e.setImagePath(rs.getString("image_path"));
         e.setLastMaintenance(rs.getDate("last_maintenance") == null ? null
                 : rs.getDate("last_maintenance").toLocalDate());
 

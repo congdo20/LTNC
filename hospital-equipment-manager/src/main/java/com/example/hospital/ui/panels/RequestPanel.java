@@ -20,19 +20,86 @@ public class RequestPanel extends JPanel {
     private JTable table;
     private MaintenanceRequestDAO dao = new MaintenanceRequestDAO();
     private User currentUser;
+    private java.util.List<MaintenanceRequest> currentRequests = new java.util.ArrayList<>();
 
     public RequestPanel(User user) {
         this.currentUser = user;
 
         setLayout(new BorderLayout());
 
-        JButton btnAdd = new JButton("Tạo yêu cầu");
-        btnAdd.addActionListener(e -> openCreateDialog());
+        // If current user is equipment manager, show status controls (no create button)
+        if (currentUser != null && currentUser.isQLThietBi()) {
+            JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            top.add(new JLabel("Chọn trạng thái: "));
+            JComboBox<String> cbStatus = new JComboBox<>(new String[] { "CHO_XU_LY", "DA_LAP_KE_HOACH", "DA_TU_CHOI" });
+            top.add(cbStatus);
+            JButton btnUpdate = new JButton("Cập nhật trạng thái");
+            top.add(btnUpdate);
+            JButton btnCreatePlan = new JButton("Tạo kế hoạch");
+            top.add(btnCreatePlan);
 
-        add(btnAdd, BorderLayout.NORTH);
+            btnUpdate.addActionListener(ae -> {
+                int r = table.getSelectedRow();
+                if (r < 0) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng chọn yêu cầu trong danh sách");
+                    return;
+                }
+                int id = (int) table.getValueAt(r, 0);
+                String newStatus = (String) cbStatus.getSelectedItem();
+                try {
+                    dao.updateStatus(id, newStatus);
+                    loadData();
+                    JOptionPane.showMessageDialog(this, "Đã cập nhật trạng thái");
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Lỗi cập nhật: " + ex.getMessage());
+                }
+            });
 
-        table = new JTable(new DefaultTableModel(
-                new String[] { "ID", "Thiết bị", "Mô tả", "Ngày", "Trạng thái" }, 0));
+            // synchronize combo with selected row
+            table = new JTable(new DefaultTableModel(
+                    new String[] { "ID", "Thiết bị", "Mô tả", "Ngày", "Trạng thái" }, 0));
+            table.getSelectionModel().addListSelectionListener(ev -> {
+                if (ev.getValueIsAdjusting())
+                    return;
+                int r = table.getSelectedRow();
+                if (r < 0)
+                    return;
+                Object s = table.getValueAt(r, 4);
+                if (s != null)
+                    cbStatus.setSelectedItem(s.toString());
+            });
+
+            add(top, BorderLayout.NORTH);
+
+            btnCreatePlan.addActionListener(ae -> {
+                int[] sel = table.getSelectedRows();
+                if (sel == null || sel.length == 0) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng chọn ít nhất một yêu cầu để lập kế hoạch");
+                    return;
+                }
+                java.util.List<MaintenanceRequest> selected = new java.util.ArrayList<>();
+                for (int r : sel) {
+                    int id = (int) table.getValueAt(r, 0);
+                    for (MaintenanceRequest mr : currentRequests) {
+                        if (mr.getId() == id) {
+                            selected.add(mr);
+                            break;
+                        }
+                    }
+                }
+                com.example.hospital.ui.panels.PlanPanel helper = new com.example.hospital.ui.panels.PlanPanel(
+                        currentUser);
+                helper.createPlansFor(selected, this);
+                loadData();
+            });
+        } else {
+            JButton btnAdd = new JButton("Tạo yêu cầu");
+            btnAdd.addActionListener(e -> openCreateDialog());
+            add(btnAdd, BorderLayout.NORTH);
+            table = new JTable(new DefaultTableModel(
+                    new String[] { "ID", "Thiết bị", "Mô tả", "Ngày", "Trạng thái" }, 0));
+        }
 
         add(new JScrollPane(table), BorderLayout.CENTER);
 
@@ -75,17 +142,14 @@ public class RequestPanel extends JPanel {
                 list = dao.findByDepartment(currentUser.getDepartmentId());
             }
 
+            this.currentRequests = list;
+
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             model.setRowCount(0);
 
             for (MaintenanceRequest r : list) {
-                model.addRow(new Object[] {
-                        r.getId(),
-                        r.getEquipmentId(),
-                        r.getIssueDescription(),
-                        r.getRequestDate(),
-                        r.getStatus()
-                });
+                model.addRow(new Object[] { r.getId(), r.getEquipmentId(), r.getIssueDescription(), r.getRequestDate(),
+                        r.getStatus() });
             }
 
         } catch (SQLException e) {

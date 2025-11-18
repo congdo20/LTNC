@@ -74,6 +74,8 @@ public class MaintenanceTask {
     private boolean completed;
     private String note;
     private String assignedTo;
+    private Integer requestId;
+    private Integer plannerId;
 
     public MaintenanceTask() {
     }
@@ -124,5 +126,21 @@ public class MaintenanceTask {
 
     public void setAssignedTo(String assignedTo) {
         this.assignedTo = assignedTo;
+    }
+
+    public Integer getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(Integer requestId) {
+        this.requestId = requestId;
+    }
+
+    public Integer getPlannerId() {
+        return plannerId;
+    }
+
+    public void setPlannerId(Integer plannerId) {
+        this.plannerId = plannerId;
     }
 }

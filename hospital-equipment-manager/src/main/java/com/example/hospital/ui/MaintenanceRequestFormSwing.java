@@ -23,7 +23,7 @@ public class MaintenanceRequestFormSwing extends JFrame {
 
     public MaintenanceRequestFormSwing(User currentUser) {
         this.currentUser = currentUser;
-        setTitle("Phiếu Đề Nghị Bảo Trì - Java Swing");
+        setTitle("Phiếu Đề Nghị Bảo Trì");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         // Sử dụng BoxLayout theo chiều dọc cho khung chính

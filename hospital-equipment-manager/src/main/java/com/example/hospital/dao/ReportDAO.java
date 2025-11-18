@@ -9,7 +9,17 @@ import java.util.List;
 
 public class ReportDAO {
 
+    public ReportDAO() {
+        try {
+            ensureTableExists();
+        } catch (SQLException e) {
+            // ignore - callers will see errors when attempting to use DAO
+            e.printStackTrace();
+        }
+    }
+
     public void create(int taskId, String reporter, String content) throws SQLException {
+        ensureTableExists();
         String sql = "INSERT INTO reports(task_id, reporter, content, created_date) VALUES (?, ?, ?, NOW())";
         try (Connection c = DBUtil.getConnection();
                 PreparedStatement p = c.prepareStatement(sql)) {
@@ -21,6 +31,7 @@ public class ReportDAO {
     }
 
     public List<Report> findAll() throws SQLException {
+        ensureTableExists();
         List<Report> list = new ArrayList<>();
         String sql = "SELECT * FROM reports ORDER BY created_date DESC";
         try (Connection c = DBUtil.getConnection();
@@ -40,11 +51,26 @@ public class ReportDAO {
     }
 
     public void delete(int id) throws SQLException {
+        ensureTableExists();
         String sql = "DELETE FROM reports WHERE id=?";
         try (Connection c = DBUtil.getConnection();
                 PreparedStatement p = c.prepareStatement(sql)) {
             p.setInt(1, id);
             p.executeUpdate();
+        }
+    }
+
+    private void ensureTableExists() throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS reports ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY,"
+                + "task_id INT,"
+                + "reporter VARCHAR(100),"
+                + "content TEXT,"
+                + "created_date DATETIME DEFAULT CURRENT_TIMESTAMP"
+                + ")";
+
+        try (Connection c = DBUtil.getConnection(); Statement s = c.createStatement()) {
+            s.execute(sql);
         }
     }
 }

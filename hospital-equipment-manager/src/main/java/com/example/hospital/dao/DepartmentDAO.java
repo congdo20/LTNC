@@ -33,4 +33,20 @@ public class DepartmentDAO {
         }
         return null;
     }
+
+    public java.util.Map<Integer, String> findAll() throws SQLException {
+        java.util.Map<Integer, String> map = new java.util.HashMap<>();
+        String sql = "SELECT id, name FROM departments ORDER BY name";
+        try (Connection conn = DBUtil.getConnection(); java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int id = rs.getInt("id");
+                    String name = rs.getString("name");
+                    map.put(id, name);
+                    cache.put(id, name);
+                }
+            }
+        }
+        return map;
+    }
 }

@@ -17,7 +17,6 @@
 //         private CardLayout card;
 //     private JPanel mainPanel;
 
-
 //     public MainFrame(User user) {
 //         this.currentUser = user;
 //         setTitle("Hospital Equipment Manager");
@@ -55,7 +54,6 @@
 //         add(tabs, BorderLayout.CENTER);
 //     }
 
-
 //     private void showUserInfo(User user) {
 //         JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 //         JLabel lblUser = new JLabel(
@@ -71,7 +69,6 @@
 //     }
 
 // }
-
 
 package com.example.hospital.ui;
 
@@ -109,7 +106,6 @@ public class MainFrame extends JFrame {
         if (user.isQLThietBi()) {
             tabs.addTab("Thiết bị", new EquipmentPanel());
             tabs.addTab("Yêu cầu bảo trì", new RequestPanel(currentUser));
-            tabs.addTab("Lên kế hoạch", new PlanPanel());
             tabs.addTab("Phân công", new AssignPanel());
         }
 

@@ -199,4 +199,14 @@ public class MaintenanceRequestDAO {
             ps.executeUpdate();
         }
     }
+
+    // update status by id
+    public void updateStatus(int id, String status) throws SQLException {
+        String sql = "UPDATE maintenance_requests SET status = ? WHERE id = ?";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, id);
+            ps.executeUpdate();
+        }
+    }
 }

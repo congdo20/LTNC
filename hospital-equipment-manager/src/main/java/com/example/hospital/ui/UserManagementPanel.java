@@ -24,7 +24,7 @@ public class UserManagementPanel extends JPanel {
         setLayout(new BorderLayout());
 
         model = new DefaultTableModel(
-                new Object[] { "ID", "Username", "Fullname", "DOB", "Gender", "Position", "Role", "Department ID",
+                new Object[] { "ID", "Username", "Fullname", "DOB", "Gender", "Position", "Role", "Department",
                         "Phone", "Email" },
                 0) {
 
@@ -43,11 +43,11 @@ public class UserManagementPanel extends JPanel {
         JButton btnDelete = new JButton("Xóa");
         JButton btnRefresh = new JButton("Làm mới");
 
-        // Theme the edit/delete buttons to make them more visible
-        btnEdit.setBackground(new Color(59, 89, 152));
-        btnEdit.setForeground(Color.WHITE);
-        btnDelete.setBackground(new Color(200, 50, 50));
-        btnDelete.setForeground(Color.WHITE);
+        // // Theme the edit/delete buttons to make them more visible
+        // btnEdit.setBackground(new Color(59, 89, 152));
+        // btnEdit.setForeground(Color.WHITE);
+        // btnDelete.setBackground(new Color(200, 50, 50));
+        // btnDelete.setForeground(Color.WHITE);
 
         btns.add(btnAdd);
         btns.add(btnEdit);
@@ -172,7 +172,7 @@ public class UserManagementPanel extends JPanel {
         private JTextField tfDob = new JTextField(10);
         private JTextField tfGender = new JTextField(8);
         private JTextField tfPosition = new JTextField(20);
-        private JTextField tfDept = new JTextField(10);
+        private JComboBox<String> cbDept = new JComboBox<>();
         private JTextField tfPhone = new JTextField(15);
         private JTextField tfEmail = new JTextField(20);
         private JComboBox<String> cbRole;
@@ -219,8 +219,19 @@ public class UserManagementPanel extends JPanel {
             }
             p.add(cbRole);
 
-            p.add(new JLabel("Department ID (optional):"));
-            p.add(tfDept);
+            p.add(new JLabel("Department (optional):"));
+            // populate department combo with id - name entries
+            try {
+                com.example.hospital.dao.DepartmentDAO depDao = new com.example.hospital.dao.DepartmentDAO();
+                java.util.Map<Integer, String> deps = depDao.findAll();
+                cbDept.addItem(""); // allow empty (no department)
+                for (java.util.Map.Entry<Integer, String> en : deps.entrySet()) {
+                    cbDept.addItem(en.getKey() + " - " + en.getValue());
+                }
+            } catch (SQLException ex) {
+                // ignore; leave combo empty
+            }
+            p.add(cbDept);
 
             p.add(new JLabel("Phone:"));
             p.add(tfPhone);
@@ -250,7 +261,19 @@ public class UserManagementPanel extends JPanel {
             tfPosition.setText(user.getPosition() == null ? "" : user.getPosition());
             if (user.getRole() != null)
                 cbRole.setSelectedItem(user.getRole().name());
-            tfDept.setText(user.getDepartmentId() == null ? "" : String.valueOf(user.getDepartmentId()));
+            // select department in combo if present
+            if (user.getDepartmentId() == null) {
+                cbDept.setSelectedIndex(0);
+            } else {
+                String targetPrefix = user.getDepartmentId() + " - ";
+                for (int i = 0; i < cbDept.getItemCount(); i++) {
+                    String it = cbDept.getItemAt(i);
+                    if (it != null && it.startsWith(targetPrefix)) {
+                        cbDept.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
             tfPhone.setText(user.getPhone() == null ? "" : user.getPhone());
             tfEmail.setText(user.getEmail() == null ? "" : user.getEmail());
         }
@@ -264,7 +287,10 @@ public class UserManagementPanel extends JPanel {
                 String gender = tfGender.getText().trim();
                 String position = tfPosition.getText().trim();
                 String role = (String) cbRole.getSelectedItem();
-                String deptText = tfDept.getText().trim();
+                String deptText = "";
+                Object sel = cbDept.getSelectedItem();
+                if (sel != null)
+                    deptText = sel.toString().trim();
                 String phone = tfPhone.getText().trim();
                 String email = tfEmail.getText().trim();
 
@@ -282,10 +308,13 @@ public class UserManagementPanel extends JPanel {
                 if (deptText.isEmpty()) {
                     user.setDepartmentId(null);
                 } else {
+                    // deptText expected as "<id> - <name>"
+                    String[] parts = deptText.split("\\s*-\\s*", 2);
                     try {
-                        user.setDepartmentId(Integer.parseInt(deptText));
-                    } catch (NumberFormatException nfe) {
-                        JOptionPane.showMessageDialog(this, "Department ID phải là số hoặc để trống");
+                        int depId = Integer.parseInt(parts[0]);
+                        user.setDepartmentId(depId);
+                    } catch (Exception nfe) {
+                        JOptionPane.showMessageDialog(this, "Chọn phòng/khoa hợp lệ hoặc để trống");
                         return;
                     }
                 }

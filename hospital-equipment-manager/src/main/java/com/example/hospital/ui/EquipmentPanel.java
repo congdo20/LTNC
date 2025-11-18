@@ -2,6 +2,7 @@ package com.example.hospital.ui;
 
 import com.example.hospital.dao.EquipmentDAO;
 import com.example.hospital.models.Equipment;
+import com.example.hospital.util.ImageUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -20,7 +21,7 @@ public class EquipmentPanel extends JPanel {
         setLayout(new BorderLayout());
 
         model = new DefaultTableModel(
-                new Object[] { "ID", "Mã", "Tên", "Nhà sản xuất", "Năm", "Trạng Thái", "ID Khoa/Phòng" }, 0) {
+                new Object[] { "ID", "Mã", "Tên", "Nhà sản xuất", "Năm", "Trạng Thái", "Khoa/Phòng" }, 0) {
             @Override
             public boolean isCellEditable(int r, int c) {
                 return false;
@@ -52,12 +53,11 @@ public class EquipmentPanel extends JPanel {
                 int id = (int) model.getValueAt(r, 0);
                 Equipment eq = equipmentDAO.findById(id);
                 if (eq != null && eq.getImagePath() != null && !eq.getImagePath().isEmpty()) {
-                    try {
-                        ImageIcon icon = new ImageIcon(eq.getImagePath());
-                        Image img = icon.getImage().getScaledInstance(260, 260, Image.SCALE_SMOOTH);
-                        imagePreview.setIcon(new ImageIcon(img));
+                    ImageIcon scaled = ImageUtil.loadScaledIcon(eq.getImagePath(), 260, 260);
+                    if (scaled != null) {
+                        imagePreview.setIcon(scaled);
                         imagePreview.setText("");
-                    } catch (Exception ex) {
+                    } else {
                         imagePreview.setIcon(null);
                         imagePreview.setText("Không tải được ảnh");
                     }
@@ -123,8 +123,20 @@ public class EquipmentPanel extends JPanel {
         JTextField tfManu = new JTextField();
         JTextField tfYear = new JTextField();
         JTextField tfStatus = new JTextField("TOT");
-        JTextField tfDept = new JTextField();
         JTextField tfImage = new JTextField();
+        javax.swing.JComboBox<String> cbDept = new javax.swing.JComboBox<>();
+
+        // populate department combo with names from DepartmentDAO
+        try {
+            com.example.hospital.dao.DepartmentDAO depDao = new com.example.hospital.dao.DepartmentDAO();
+            java.util.Map<Integer, String> map = depDao.findAll();
+            // keep insertion order by name is already sorted in DAO
+            for (java.util.Map.Entry<Integer, String> ent : map.entrySet()) {
+                cbDept.addItem(ent.getValue());
+            }
+        } catch (Exception ex) {
+            // fallback: leave combo empty
+        }
 
         Object[] inputs = {
                 "Mã:", tfCode,
@@ -133,7 +145,7 @@ public class EquipmentPanel extends JPanel {
                 "Năm:", tfYear,
                 "Trang Thai (TOT/BAO_TRI/HU_HONG):", tfStatus,
                 "Đường dẫn ảnh (local path or URL):", tfImage,
-                "Khoa/Phòng:", tfDept
+                "Khoa/Phòng:", cbDept
         };
 
         if (JOptionPane.showConfirmDialog(this, inputs, "Thêm thiết bị",
@@ -146,7 +158,24 @@ public class EquipmentPanel extends JPanel {
             e.setImagePath(tfImage.getText().isEmpty() ? null : tfImage.getText());
             e.setYearOfUse(tfYear.getText().isEmpty() ? null : Integer.parseInt(tfYear.getText()));
             e.setStatus(tfStatus.getText());
-            e.setDepartmentId(tfDept.getText().isEmpty() ? null : Integer.parseInt(tfDept.getText()));
+            // map selected department name back to id
+            String selDept = (String) cbDept.getSelectedItem();
+            Integer deptId = null;
+            if (selDept != null && !selDept.isEmpty()) {
+                try {
+                    com.example.hospital.dao.DepartmentDAO depDao = new com.example.hospital.dao.DepartmentDAO();
+                    java.util.Map<Integer, String> map = depDao.findAll();
+                    for (java.util.Map.Entry<Integer, String> en : map.entrySet()) {
+                        if (selDept.equals(en.getValue())) {
+                            deptId = en.getKey();
+                            break;
+                        }
+                    }
+                } catch (Exception ex) {
+                    // ignore and leave deptId null
+                }
+            }
+            e.setDepartmentId(deptId);
 
             try {
                 equipmentDAO.create(e);
@@ -174,7 +203,24 @@ public class EquipmentPanel extends JPanel {
             JTextField tfYear = new JTextField(e.getYearOfUse() + "");
             JTextField tfStatus = new JTextField(e.getStatus());
             JTextField tfImage = new JTextField(e.getImagePath() == null ? "" : e.getImagePath());
-            JTextField tfDept = new JTextField(e.getDepartmentId() + "");
+            javax.swing.JComboBox<String> cbDept = new javax.swing.JComboBox<>();
+
+            // populate departments and preselect current
+            try {
+                com.example.hospital.dao.DepartmentDAO depDao = new com.example.hospital.dao.DepartmentDAO();
+                java.util.Map<Integer, String> map = depDao.findAll();
+                String selName = null;
+                for (java.util.Map.Entry<Integer, String> ent : map.entrySet()) {
+                    cbDept.addItem(ent.getValue());
+                    if (e.getDepartmentId() != null && e.getDepartmentId().equals(ent.getKey())) {
+                        selName = ent.getValue();
+                    }
+                }
+                if (selName != null)
+                    cbDept.setSelectedItem(selName);
+            } catch (Exception ex) {
+                // ignore
+            }
 
             Object[] inputs = {
                     "Mã:", tfCode,
@@ -183,7 +229,7 @@ public class EquipmentPanel extends JPanel {
                     "Năm:", tfYear,
                     "Trang Thai (TOT/BAO_TRI/HU_HONG):", tfStatus,
                     "Đường dẫn ảnh (local path or URL):", tfImage,
-                    "Khoa/Phòng:", tfDept
+                    "Khoa/Phòng:", cbDept
             };
 
             if (JOptionPane.showConfirmDialog(this, inputs, "Sửa thiết bị",
@@ -195,7 +241,25 @@ public class EquipmentPanel extends JPanel {
                 e.setImagePath(tfImage.getText().isEmpty() ? null : tfImage.getText());
                 e.setYearOfUse(tfYear.getText().isEmpty() ? null : Integer.parseInt(tfYear.getText()));
                 e.setStatus(tfStatus.getText());
-                e.setDepartmentId(tfDept.getText().isEmpty() ? null : Integer.parseInt(tfDept.getText()));
+
+                // map selected department name back to id
+                String selDept = (String) cbDept.getSelectedItem();
+                Integer deptId = null;
+                if (selDept != null && !selDept.isEmpty()) {
+                    try {
+                        com.example.hospital.dao.DepartmentDAO depDao = new com.example.hospital.dao.DepartmentDAO();
+                        java.util.Map<Integer, String> map = depDao.findAll();
+                        for (java.util.Map.Entry<Integer, String> en : map.entrySet()) {
+                            if (selDept.equals(en.getValue())) {
+                                deptId = en.getKey();
+                                break;
+                            }
+                        }
+                    } catch (Exception ex) {
+                        // ignore
+                    }
+                }
+                e.setDepartmentId(deptId);
 
                 equipmentDAO.update(e);
                 loadData();
