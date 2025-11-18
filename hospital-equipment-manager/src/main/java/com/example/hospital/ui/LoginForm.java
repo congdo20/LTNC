@@ -41,7 +41,7 @@ public class LoginForm extends JFrame {
         try {
             User user = userDAO.login(username, password);
             if (user != null) {
-                JOptionPane.showMessageDialog(this, "Đăng nhập thành công!");
+                // Open main screen directly on successful login
                 MainFrame mainFrame = new MainFrame(user);
                 mainFrame.setVisible(true);
                 dispose();

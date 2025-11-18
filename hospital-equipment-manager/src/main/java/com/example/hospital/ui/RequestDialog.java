@@ -83,7 +83,7 @@ public class RequestDialog extends JDialog {
             r.setRequesterId(user.getId());
             r.setDepartmentId(user.getDepartmentId());
             r.setIssueDescription(txtIssue.getText());
-            r.setPriority((String) cbPriority.getSelectedItem());
+            // r.setPriority((String) cbPriority.getSelectedItem());
 
             dao.create(r);
 

@@ -62,8 +62,13 @@ public class User {
     private String username;
     private String password;
     private String fullname;
+    private String dob; // YYYY-MM-DD
+    private String gender;
+    private String position;
     private Role role;
     private Integer departmentId;
+    private String phone;
+    private String email;
 
     public enum Role {
         ADMIN, TRUONG_KHOA, QL_THIET_BI, NV_BAO_TRI
@@ -76,13 +81,6 @@ public class User {
         this.id = id;
         this.username = username;
         this.password = password;
-        this.fullname = fullname;
-        this.role = role;
-    }
-
-    public User(int id, String username, String fullname, Role role) {
-        this.id = id;
-        this.username = username;
         this.fullname = fullname;
         this.role = role;
     }
@@ -133,6 +131,46 @@ public class User {
 
     public void setDepartmentId(Integer departmentId) {
         this.departmentId = departmentId;
+    }
+
+    public String getDob() {
+        return dob;
+    }
+
+    public void setDob(String dob) {
+        this.dob = dob;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public String getPosition() {
+        return position;
+    }
+
+    public void setPosition(String position) {
+        this.position = position;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public boolean isAdmin() {

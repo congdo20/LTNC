@@ -8,18 +8,6 @@ CREATE TABLE departments (
     description VARCHAR(255)
 );
 
--- CREATE TABLE users (
---     id INT AUTO_INCREMENT PRIMARY KEY,
---     username VARCHAR(50) UNIQUE NOT NULL,
---     password VARCHAR(255) NOT NULL,
---     fullname VARCHAR(100),
---     position VARCHAR(100),
---     role ENUM('ADMIN','DEPARTMENT_HEAD','MANAGER','TECHNICIAN') DEFAULT 'TECHNICIAN',
---     department_id INT,
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---     FOREIGN KEY (department_id) REFERENCES departments(id)
--- );
-
 
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -61,7 +49,6 @@ CREATE TABLE maintenance_requests (
     equipment_id INT NOT NULL,
     issue_description TEXT,
     request_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    priority ENUM('CAO','TRUNG_BINH','THAP') DEFAULT 'TRUNG_BINH',
     status ENUM('CHO_XU_LY','DA_LAP_KE_HOACH','DA_TU_CHOI') DEFAULT 'CHO_XU_LY',
     FOREIGN KEY (requester_id) REFERENCES users(id),
     FOREIGN KEY (department_id) REFERENCES departments(id),
@@ -133,13 +120,21 @@ INSERT INTO departments (name) VALUES ('Khoa Nội'), ('Khoa Ngoại'), ('Hồi 
 
 INSERT INTO users(username, password, fullname, dob, gender, position, role, department_id, phone, email)
 VALUES
-('admin', '123456', 'Quản Trị Viên', '1990-01-01', 'NAM', 'Admin hệ thống', 'ADMIN', NULL, '0900000000', 'admin@hospital.vn'),
+('admin', '1', 'Nguyễn Công Trình Độ', '2002-01-20', 'NAM', 'Admin hệ thống', 'ADMIN', NULL, '0900000000', 'admin@hospital.vn'),
 
-('truongnoi', '123456', 'Trần Văn A', '1980-05-12', 'NAM', 'Trưởng khoa Nội', 'TRUONG_KHOA', 1, '0912345678', 'tva@hospital.vn'),
+('truongnoi', '1', 'Trần Văn A', '1980-05-12', 'NAM', 'Trưởng khoa Nội', 'TRUONG_KHOA', 1, '0912345678', 'tva@hospital.vn'),
 
-('qltb', '123456', 'Nguyễn Văn B', '1985-03-15', 'NAM', 'Tổ trưởng Quản lý thiết bị', 'QL_THIET_BI', 4, '0933555111', 'qltb@hospital.vn'),
+('qltb', '1', 'Nguyễn Văn B', '1985-03-15', 'NAM', 'Tổ trưởng Quản lý thiết bị', 'QL_THIET_BI', 4, '0933555111', 'qltb@hospital.vn'),
 
-('kthuat1', '123456', 'Nguyễn Thị C', '1995-11-20', 'NU', 'Kỹ thuật viên', 'NV_BAO_TRI', 4, '0988666333', 'ktv1@hospital.vn');
+('kthuat1', '1', 'Nguyễn Thị C', '1995-11-20', 'NU', 'Kỹ thuật viên', 'NV_BAO_TRI', 4, '0988666333', '0988666333');
 
-update users set fullname='Nguyễn Công Trình Độ' where username='admin' ;
+-- update users set fullname='Nguyễn Công Trình Độ' where username='admin' ;
+
+
+ALTER TABLE equipment
+ADD COLUMN last_maintenance DATE;
+
+-- add image path for equipment pictures
+ALTER TABLE equipment
+ADD COLUMN image_path VARCHAR(255);
 

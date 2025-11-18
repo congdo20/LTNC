@@ -50,13 +50,23 @@ import java.util.List;
 public class UserDAO {
 
     public void create(User user, String password) throws SQLException {
-        String sql = "INSERT INTO users(username, password, fullname, role) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO users(username, password, fullname, dob, gender, position, role, department_id, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBUtil.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, user.getUsername());
-            ps.setString(2, password);
-            ps.setString(3, user.getFullname());
-            ps.setString(4, user.getRole().name());
+            int idx = 1;
+            ps.setString(idx++, user.getUsername());
+            ps.setString(idx++, password);
+            ps.setString(idx++, user.getFullname());
+            ps.setString(idx++, user.getDob());
+            ps.setString(idx++, user.getGender());
+            ps.setString(idx++, user.getPosition());
+            ps.setString(idx++, user.getRole() == null ? null : user.getRole().name());
+            if (user.getDepartmentId() == null)
+                ps.setNull(idx++, Types.INTEGER);
+            else
+                ps.setInt(idx++, user.getDepartmentId());
+            ps.setString(idx++, user.getPhone());
+            ps.setString(idx++, user.getEmail());
             ps.executeUpdate();
         }
     }
@@ -64,9 +74,9 @@ public class UserDAO {
     public void update(User user, String password) throws SQLException {
         String sql;
         if (password == null || password.isEmpty()) {
-            sql = "UPDATE users SET username=?, fullname=?, role=? WHERE id=?";
+            sql = "UPDATE users SET username=?, fullname=?, dob=?, gender=?, position=?, role=?, department_id=?, phone=?, email=? WHERE id=?";
         } else {
-            sql = "UPDATE users SET username=?, password=?, fullname=?, role=? WHERE id=?";
+            sql = "UPDATE users SET username=?, password=?, fullname=?, dob=?, gender=?, position=?, role=?, department_id=?, phone=?, email=? WHERE id=?";
         }
 
         try (Connection conn = DBUtil.getConnection();
@@ -77,7 +87,16 @@ public class UserDAO {
             if (password != null && !password.isEmpty())
                 ps.setString(idx++, password);
             ps.setString(idx++, user.getFullname());
-            ps.setString(idx++, user.getRole().name());
+            ps.setString(idx++, user.getDob());
+            ps.setString(idx++, user.getGender());
+            ps.setString(idx++, user.getPosition());
+            ps.setString(idx++, user.getRole() == null ? null : user.getRole().name());
+            if (user.getDepartmentId() == null)
+                ps.setNull(idx++, Types.INTEGER);
+            else
+                ps.setInt(idx++, user.getDepartmentId());
+            ps.setString(idx++, user.getPhone());
+            ps.setString(idx++, user.getEmail());
             ps.setInt(idx, user.getId());
             ps.executeUpdate();
         }
@@ -100,12 +119,12 @@ public class UserDAO {
                 ResultSet rs = st.executeQuery(sql)) {
 
             // while (rs.next()) {
-            //     User u = new User();
-            //     u.setId(rs.getInt("id"));
-            //     u.setUsername(rs.getString("username"));
-            //     u.setFullname(rs.getString("fullname"));
-            //     u.setRole(User.Role.valueOf(rs.getString("role")));
-            //     list.add(u);
+            // User u = new User();
+            // u.setId(rs.getInt("id"));
+            // u.setUsername(rs.getString("username"));
+            // u.setFullname(rs.getString("fullname"));
+            // u.setRole(User.Role.valueOf(rs.getString("role")));
+            // list.add(u);
             // }
 
             while (rs.next()) {
@@ -113,10 +132,17 @@ public class UserDAO {
                 u.setId(rs.getInt("id"));
                 u.setUsername(rs.getString("username"));
                 u.setFullname(rs.getString("fullname"));
-                u.setRole(User.Role.valueOf(rs.getString("role")));
+                u.setDob(rs.getString("dob"));
+                u.setGender(rs.getString("gender"));
+                u.setPosition(rs.getString("position"));
+                String r = rs.getString("role");
+                if (r != null)
+                    u.setRole(User.Role.valueOf(r));
 
                 int dep = rs.getInt("department_id");
-                u.setDepartmentId(rs.wasNull() ? null : dep); // ✅ thêm
+                u.setDepartmentId(rs.wasNull() ? null : dep);
+                u.setPhone(rs.getString("phone"));
+                u.setEmail(rs.getString("email"));
 
                 list.add(u);
             }
@@ -135,11 +161,19 @@ public class UserDAO {
                     User u = new User();
                     u.setId(rs.getInt("id"));
                     u.setUsername(rs.getString("username"));
+
                     u.setFullname(rs.getString("fullname"));
-                    u.setRole(User.Role.valueOf(rs.getString("role")));
+                    u.setDob(rs.getString("dob"));
+                    u.setGender(rs.getString("gender"));
+                    u.setPosition(rs.getString("position"));
+                    String r = rs.getString("role");
+                    if (r != null)
+                        u.setRole(User.Role.valueOf(r));
 
                     int dep = rs.getInt("department_id");
                     u.setDepartmentId(rs.wasNull() ? null : dep);
+                    u.setPhone(rs.getString("phone"));
+                    u.setEmail(rs.getString("email"));
 
                     return u;
                 }
@@ -149,27 +183,26 @@ public class UserDAO {
     }
 
     // public User login(String username, String password) throws SQLException {
-    //     String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
-    //     try (Connection conn = DBUtil.getConnection();
-    //             PreparedStatement ps = conn.prepareStatement(sql)) {
+    // String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+    // try (Connection conn = DBUtil.getConnection();
+    // PreparedStatement ps = conn.prepareStatement(sql)) {
 
-    //         ps.setString(1, username);
-    //         ps.setString(2, password);
+    // ps.setString(1, username);
+    // ps.setString(2, password);
 
-    //         try (ResultSet rs = ps.executeQuery()) {
-    //             if (rs.next()) {
-    //                 User u = new User();
-    //                 u.setId(rs.getInt("id"));
-    //                 u.setUsername(rs.getString("username"));
-    //                 u.setFullname(rs.getString("fullname"));
-    //                 u.setRole(User.Role.valueOf(rs.getString("role")));
-    //                 return u;
-    //             }
-    //         }
-    //     }
-    //     return null;
+    // try (ResultSet rs = ps.executeQuery()) {
+    // if (rs.next()) {
+    // User u = new User();
+    // u.setId(rs.getInt("id"));
+    // u.setUsername(rs.getString("username"));
+    // u.setFullname(rs.getString("fullname"));
+    // u.setRole(User.Role.valueOf(rs.getString("role")));
+    // return u;
     // }
-
+    // }
+    // }
+    // return null;
+    // }
 
     public User login(String username, String password) throws SQLException {
         String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
@@ -186,10 +219,17 @@ public class UserDAO {
                     u.setId(rs.getInt("id"));
                     u.setUsername(rs.getString("username"));
                     u.setFullname(rs.getString("fullname"));
-                    u.setRole(User.Role.valueOf(rs.getString("role")));
+                    u.setDob(rs.getString("dob"));
+                    u.setGender(rs.getString("gender"));
+                    u.setPosition(rs.getString("position"));
+                    String r = rs.getString("role");
+                    if (r != null)
+                        u.setRole(User.Role.valueOf(r));
 
                     int dep = rs.getInt("department_id");
-                    u.setDepartmentId(rs.wasNull() ? null : dep); // ✅ thêm
+                    u.setDepartmentId(rs.wasNull() ? null : dep);
+                    u.setPhone(rs.getString("phone"));
+                    u.setEmail(rs.getString("email"));
 
                     return u;
                 }

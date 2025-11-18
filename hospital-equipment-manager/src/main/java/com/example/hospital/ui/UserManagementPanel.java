@@ -24,7 +24,9 @@ public class UserManagementPanel extends JPanel {
         setLayout(new BorderLayout());
 
         model = new DefaultTableModel(
-                new Object[] { "ID", "Username", "Fullname", "Role" }, 0) {
+                new Object[] { "ID", "Username", "Fullname", "DOB", "Gender", "Position", "Role", "Department ID",
+                        "Phone", "Email" },
+                0) {
 
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -40,6 +42,12 @@ public class UserManagementPanel extends JPanel {
         JButton btnEdit = new JButton("Sửa");
         JButton btnDelete = new JButton("Xóa");
         JButton btnRefresh = new JButton("Làm mới");
+
+        // Theme the edit/delete buttons to make them more visible
+        btnEdit.setBackground(new Color(59, 89, 152));
+        btnEdit.setForeground(Color.WHITE);
+        btnDelete.setBackground(new Color(200, 50, 50));
+        btnDelete.setForeground(Color.WHITE);
 
         btns.add(btnAdd);
         btns.add(btnEdit);
@@ -83,16 +91,46 @@ public class UserManagementPanel extends JPanel {
         try {
             model.setRowCount(0);
             List<User> list = userDAO.findAll();
+            com.example.hospital.dao.DepartmentDAO depDao = new com.example.hospital.dao.DepartmentDAO();
             for (User u : list) {
+                String deptName = null;
+                try {
+                    deptName = depDao.findNameById(u.getDepartmentId());
+                } catch (SQLException ex) {
+                    // ignore and fallback to id
+                }
                 model.addRow(new Object[] {
                         u.getId(),
                         u.getUsername(),
                         u.getFullname(),
-                        u.getRole()
+                        u.getDob() == null ? "" : u.getDob(),
+                        u.getGender() == null ? "" : u.getGender(),
+                        u.getPosition() == null ? "" : u.getPosition(),
+                        roleLabel(u.getRole()),
+                        deptName == null ? (u.getDepartmentId() == null ? "" : u.getDepartmentId()) : deptName,
+                        u.getPhone() == null ? "" : u.getPhone(),
+                        u.getEmail() == null ? "" : u.getEmail()
                 });
             }
         } catch (SQLException ex) {
             showError(ex);
+        }
+    }
+
+    private String roleLabel(User.Role role) {
+        if (role == null)
+            return "";
+        switch (role) {
+            case ADMIN:
+                return "Quản trị";
+            case TRUONG_KHOA:
+                return "Trưởng khoa";
+            case QL_THIET_BI:
+                return "Quản lý thiết bị";
+            case NV_BAO_TRI:
+                return "Nhân viên bảo trì";
+            default:
+                return role.name();
         }
     }
 
@@ -131,7 +169,13 @@ public class UserManagementPanel extends JPanel {
         private JTextField tfUser = new JTextField(20);
         private JPasswordField pfPass = new JPasswordField(20);
         private JTextField tfFull = new JTextField(20);
-        private JComboBox<String> cbRole = new JComboBox<>(new String[] { "USER", "ADMIN" });
+        private JTextField tfDob = new JTextField(10);
+        private JTextField tfGender = new JTextField(8);
+        private JTextField tfPosition = new JTextField(20);
+        private JTextField tfDept = new JTextField(10);
+        private JTextField tfPhone = new JTextField(15);
+        private JTextField tfEmail = new JTextField(20);
+        private JComboBox<String> cbRole;
 
         private User user;
         private UserDAO dao;
@@ -146,7 +190,7 @@ public class UserManagementPanel extends JPanel {
         }
 
         private void initUI() {
-            JPanel p = new JPanel(new GridLayout(5, 2, 6, 6));
+            JPanel p = new JPanel(new GridLayout(11, 2, 6, 6));
             p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
             p.add(new JLabel("Username:"));
@@ -158,8 +202,31 @@ public class UserManagementPanel extends JPanel {
             p.add(new JLabel("Full name:"));
             p.add(tfFull);
 
+            p.add(new JLabel("DOB (YYYY-MM-DD):"));
+            p.add(tfDob);
+
+            p.add(new JLabel("Gender:"));
+            p.add(tfGender);
+
+            p.add(new JLabel("Position:"));
+            p.add(tfPosition);
+
             p.add(new JLabel("Role:"));
+            // populate role combo with enum names
+            cbRole = new JComboBox<>();
+            for (User.Role r : User.Role.values()) {
+                cbRole.addItem(r.name());
+            }
             p.add(cbRole);
+
+            p.add(new JLabel("Department ID (optional):"));
+            p.add(tfDept);
+
+            p.add(new JLabel("Phone:"));
+            p.add(tfPhone);
+
+            p.add(new JLabel("Email:"));
+            p.add(tfEmail);
 
             JButton btnSave = new JButton("Lưu");
             JButton btnCancel = new JButton("Hủy");
@@ -178,8 +245,14 @@ public class UserManagementPanel extends JPanel {
         private void fillData() {
             tfUser.setText(user.getUsername());
             tfFull.setText(user.getFullname());
+            tfDob.setText(user.getDob() == null ? "" : user.getDob());
+            tfGender.setText(user.getGender() == null ? "" : user.getGender());
+            tfPosition.setText(user.getPosition() == null ? "" : user.getPosition());
             if (user.getRole() != null)
-                cbRole.setSelectedItem(user.getRole());
+                cbRole.setSelectedItem(user.getRole().name());
+            tfDept.setText(user.getDepartmentId() == null ? "" : String.valueOf(user.getDepartmentId()));
+            tfPhone.setText(user.getPhone() == null ? "" : user.getPhone());
+            tfEmail.setText(user.getEmail() == null ? "" : user.getEmail());
         }
 
         private void save() {
@@ -187,25 +260,57 @@ public class UserManagementPanel extends JPanel {
                 String username = tfUser.getText().trim();
                 String password = new String(pfPass.getPassword());
                 String fullname = tfFull.getText().trim();
+                String dob = tfDob.getText().trim();
+                String gender = tfGender.getText().trim();
+                String position = tfPosition.getText().trim();
                 String role = (String) cbRole.getSelectedItem();
+                String deptText = tfDept.getText().trim();
+                String phone = tfPhone.getText().trim();
+                String email = tfEmail.getText().trim();
 
                 if (username.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Username required");
+                    JOptionPane.showMessageDialog(this, "Yêu cầu tên người dùng (Username)");
                     return;
                 }
 
                 user.setUsername(username);
                 user.setFullname(fullname);
-                user.setRole(User.Role.valueOf(role.toUpperCase()));
+                user.setDob(dob.isEmpty() ? null : dob);
+                user.setGender(gender.isEmpty() ? null : gender);
+                user.setPosition(position.isEmpty() ? null : position);
+                user.setRole(User.Role.valueOf(role));
+                if (deptText.isEmpty()) {
+                    user.setDepartmentId(null);
+                } else {
+                    try {
+                        user.setDepartmentId(Integer.parseInt(deptText));
+                    } catch (NumberFormatException nfe) {
+                        JOptionPane.showMessageDialog(this, "Department ID phải là số hoặc để trống");
+                        return;
+                    }
+                }
 
-                // if (user.getId() == 0) {
-                //     dao.create(user, password);
-                // } else {
-                //     dao.update(user, password);
-                // }
+                user.setPhone(phone.isEmpty() ? null : phone);
+                user.setEmail(email.isEmpty() ? null : email);
 
-                saved = true;
-                dispose();
+                try {
+                    if (user.getId() == 0) {
+                        // Creating new user requires a password
+                        if (password.isEmpty()) {
+                            JOptionPane.showMessageDialog(this, "Yêu cầu mật khẩu cho người dùng mới");
+                            return;
+                        }
+                        dao.create(user, password);
+                    } else {
+                        // Update; if password empty => no change (handled by DAO)
+                        dao.update(user, password);
+                    }
+                    saved = true;
+                    dispose();
+                } catch (SQLException s) {
+                    s.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Lỗi lưu: " + s.getMessage());
+                }
 
             } catch (Exception ex) {
                 ex.printStackTrace();

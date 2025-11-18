@@ -30,8 +30,6 @@
 
 // // }
 
-
-
 // package com.example.hospital.dao;
 
 // import java.sql.*;
@@ -91,7 +89,6 @@
 //         return list;
 //     }
 
-
 //     public List<MaintenanceRequest> findAll() throws SQLException {
 //         List<MaintenanceRequest> list = new ArrayList<>();
 
@@ -110,7 +107,6 @@
 
 // }
 
-
 package com.example.hospital.dao;
 
 import com.example.hospital.models.MaintenanceRequest;
@@ -127,15 +123,15 @@ public class MaintenanceRequestDAO {
         MaintenanceRequest r = new MaintenanceRequest();
 
         r.setId(rs.getInt("id"));
+        r.setRequesterId(rs.getInt("requester_id"));
         r.setEquipmentId(rs.getInt("equipment_id"));
         r.setIssueDescription(rs.getString("issue_description"));
         // r.setRequestDate(rs.getTimestamp("request_date"));
         r.setRequestDate(rs.getTimestamp("request_date").toLocalDateTime());
-        r.setPriority(rs.getString("priority"));
         r.setStatus(rs.getString("status"));
 
         int dep = rs.getInt("department_id");
-        r.setDepartmentId(rs.wasNull() ? null : dep);
+        r.setDepartmentId(rs.wasNull() ? 0 : dep);
 
         return r;
     }
@@ -179,19 +175,26 @@ public class MaintenanceRequestDAO {
 
     // ✅ insert
     public void create(MaintenanceRequest req) throws SQLException {
-
-        String sql = "INSERT INTO maintenance_requests(equipment_id, issue_description, request_date, priority, status, department_id) VALUES (?, ?, ?, ?, ?, ?)";
+        // Columns match schema: requester_id, department_id, equipment_id,
+        // issue_description, request_date, status
+        String sql = "INSERT INTO maintenance_requests(requester_id, department_id, equipment_id, issue_description, request_date, status) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBUtil.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, req.getEquipmentId());
-            ps.setString(2, req.getIssueDescription());
-            // ps.setTimestamp(3, new Timestamp(req.getRequestDate().getTime()));
-            ps.setTimestamp(5, Timestamp.valueOf(req.getRequestDate()));
-            ps.setString(4, req.getPriority());
-            ps.setString(5, req.getStatus());
-            ps.setInt(6, req.getDepartmentId());
+            // DEBUG: log SQL and parameter values to diagnose issues
+            System.out.println("[DEBUG] MaintenanceRequestDAO.create SQL: " + sql);
+            System.out.println("[DEBUG] requesterId=" + req.getRequesterId() + ", equipmentId=" + req.getEquipmentId()
+                    + ", departmentId=" + req.getDepartmentId());
+
+            int idx = 1;
+            ps.setInt(idx++, req.getRequesterId());
+            // department_id is required in schema; setInt directly
+            ps.setInt(idx++, req.getDepartmentId());
+            ps.setInt(idx++, req.getEquipmentId());
+            ps.setString(idx++, req.getIssueDescription());
+            ps.setTimestamp(idx++, Timestamp.valueOf(req.getRequestDate()));
+            ps.setString(idx++, req.getStatus());
 
             ps.executeUpdate();
         }

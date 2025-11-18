@@ -1,29 +1,3 @@
-// package com.example.hospital.ui.panels;
-
-// import javax.swing.*;
-// import java.awt.*;
-
-// public class RequestPanel extends JPanel {
-
-//     public RequestPanel() {
-//         setLayout(new BorderLayout());
-
-//         JLabel title = new JLabel("Danh sách yêu cầu bảo trì", SwingConstants.CENTER);
-//         add(title, BorderLayout.NORTH);
-
-//         JTable table = new JTable(
-//                 new Object[][] {},
-//                 new String[] { "Mã yêu cầu", "Thiết bị", "Người tạo", "Ngày tạo", "Trạng thái" });
-//         add(new JScrollPane(table), BorderLayout.CENTER);
-
-//         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.LEFT));
-//         JButton btnAdd = new JButton("Tạo yêu cầu");
-//         bottom.add(btnAdd);
-
-//         add(bottom, BorderLayout.SOUTH);
-//     }
-// }
-
 package com.example.hospital.ui.panels;
 
 import javax.swing.*;
@@ -33,6 +7,9 @@ import com.example.hospital.dao.MaintenanceRequestDAO;
 import com.example.hospital.models.MaintenanceRequest;
 import com.example.hospital.models.User;
 import com.example.hospital.ui.RequestDialog;
+import com.example.hospital.ui.MaintenanceRequestFormSwing;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import java.awt.*;
 import java.sql.SQLException;
@@ -43,23 +20,6 @@ public class RequestPanel extends JPanel {
     private JTable table;
     private MaintenanceRequestDAO dao = new MaintenanceRequestDAO();
     private User currentUser;
-
-    // public RequestPanel() {
-    //     // Initialize panel without user
-    //     setLayout(new BorderLayout());
-
-    //     JButton btnAdd = new JButton("Tạo yêu cầu");
-    //     btnAdd.addActionListener(e -> openCreateDialog());
-
-    //     add(btnAdd, BorderLayout.NORTH);
-
-    //     table = new JTable(new DefaultTableModel(
-    //             new String[] { "ID", "Thiết bị", "Mô tả", "Ngày", "Độ ưu tiên", "Trạng thái" }, 0));
-
-    //     add(new JScrollPane(table), BorderLayout.CENTER);
-
-    //     loadData();
-    // }
 
     public RequestPanel(User user) {
         this.currentUser = user;
@@ -72,7 +32,7 @@ public class RequestPanel extends JPanel {
         add(btnAdd, BorderLayout.NORTH);
 
         table = new JTable(new DefaultTableModel(
-                new String[] { "ID", "Thiết bị", "Mô tả", "Ngày", "Độ ưu tiên", "Trạng thái" }, 0));
+                new String[] { "ID", "Thiết bị", "Mô tả", "Ngày", "Trạng thái" }, 0));
 
         add(new JScrollPane(table), BorderLayout.CENTER);
 
@@ -80,6 +40,23 @@ public class RequestPanel extends JPanel {
     }
 
     private void openCreateDialog() {
+        // If the current user is a department head, open the full maintenance form
+        if (currentUser != null && currentUser.isTruongKhoa()) {
+            MaintenanceRequestFormSwing form = new MaintenanceRequestFormSwing(currentUser);
+            // Ensure disposing the form doesn't exit the application
+            form.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            // When the form is closed, refresh the table to show any new requests
+            form.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    loadData();
+                }
+            });
+            form.setVisible(true);
+            return;
+        }
+
+        // Default behavior for other users: open modal RequestDialog
         RequestDialog dlg = new RequestDialog(SwingUtilities.getWindowAncestor(this), currentUser);
         dlg.setVisible(true);
 
@@ -87,31 +64,6 @@ public class RequestPanel extends JPanel {
             loadData();
         }
     }
-
-    // private void loadData() {
-    // try {
-    // List<MaintenanceRequest> list =
-    // dao.findByDepartment(currentUser.getDepartmentId());
-
-    // DefaultTableModel model = (DefaultTableModel) table.getModel();
-    // model.setRowCount(0);
-
-    // for (MaintenanceRequest r : list) {
-    // model.addRow(new Object[] {
-    // r.getId(),
-    // r.getEquipmentId(),
-    // r.getIssueDescription(),
-    // r.getRequestDate(),
-    // r.getPriority(),
-    // r.getStatus()
-    // });
-    // }
-
-    // } catch (SQLException e) {
-    // e.printStackTrace();
-    // JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu: " + e.getMessage());
-    // }
-    // }
 
     private void loadData() {
         try {
@@ -132,7 +84,6 @@ public class RequestPanel extends JPanel {
                         r.getEquipmentId(),
                         r.getIssueDescription(),
                         r.getRequestDate(),
-                        r.getPriority(),
                         r.getStatus()
                 });
             }

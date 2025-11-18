@@ -83,8 +83,6 @@
 //     }
 // }
 
-
-
 package com.example.hospital.models;
 
 import java.time.LocalDateTime;
@@ -97,13 +95,11 @@ public class MaintenanceRequest {
     private int equipmentId;
     private String issueDescription;
     private LocalDateTime requestDate;
-    private String priority; // CAO / TRUNG_BINH / THAP
     private String status; // CHO_XU_LY / DA_LAP_KE_HOACH / DA_TU_CHOI
 
     public MaintenanceRequest() {
         this.requestDate = LocalDateTime.now();
         this.status = "CHO_XU_LY";
-        this.priority = "TRUNG_BINH";
     }
 
     public int getId() {
@@ -152,14 +148,6 @@ public class MaintenanceRequest {
 
     public void setRequestDate(LocalDateTime requestDate) {
         this.requestDate = requestDate;
-    }
-
-    public String getPriority() {
-        return priority;
-    }
-
-    public void setPriority(String priority) {
-        this.priority = priority;
     }
 
     public String getStatus() {

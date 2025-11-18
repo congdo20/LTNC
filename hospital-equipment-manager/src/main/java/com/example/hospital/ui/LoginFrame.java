@@ -85,7 +85,7 @@ public class LoginFrame extends JFrame {
             User u = dao.login(user, pass);
 
             if (u != null) {
-                JOptionPane.showMessageDialog(this, "Đăng nhập thành công!");
+                // Open main screen directly on successful login
                 new MainFrame(u).setVisible(true);
                 dispose();
             } else {
