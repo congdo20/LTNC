@@ -7,3 +7,7 @@ sửa lại mẫu gửi yêu cầu đúng mẫu 3
 phản hồi lại khi yêu cầu được xử lý, quy trình lập kế hoạch
 
 nâng cấp giao diện
+
+
+phiếu yêu cầu bảo trì chưa có list chọn thiết bị
+hiển thị tên thiết bị trong yêu cầu bảo trì thay vì id
