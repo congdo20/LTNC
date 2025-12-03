@@ -1,5 +1,6 @@
 package com.example.hospital.ui;
 
+import com.example.hospital.dao.DepartmentDAO;
 import com.example.hospital.dao.EquipmentDAO;
 import com.example.hospital.dao.MaintenanceRequestDAO;
 import com.example.hospital.models.Equipment;
@@ -13,12 +14,15 @@ import javax.swing.border.MatteBorder;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class MaintenanceRequestFormSwing extends JFrame {
 
     private final User currentUser;
-    private final List<JTextField[]> equipmentRows = new ArrayList<>();
-    private JTextField tfNgayYeuCau;
+    private final List<JComponent[]> equipmentRows = new ArrayList<>();
+    private List<Equipment> allEquipment = new ArrayList<>();
+    private JFormattedTextField tfNgayYeuCau;
     private JTextField tfKhoaPhong;
 
     public MaintenanceRequestFormSwing(User currentUser) {
@@ -48,6 +52,27 @@ public class MaintenanceRequestFormSwing extends JFrame {
         // 3. Request Info
         mainPanel.add(createRequestInfoPanel());
         mainPanel.add(Box.createVerticalStrut(15));
+
+        // Load equipment data based on user role
+        try {
+            if (currentUser != null && currentUser.getDepartmentId() != null) {
+                if (currentUser.isTruongKhoa()) {
+                    // For department heads, only show equipment from their department
+                    allEquipment = new EquipmentDAO().findByDepartment(currentUser.getDepartmentId());
+                } else {
+                    // For other roles, show all equipment
+                    allEquipment = new EquipmentDAO().findAll();
+                }
+            } else {
+                // Default to all equipment if user or department is not available
+                allEquipment = new EquipmentDAO().findAll();
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "Lỗi khi tải danh sách thiết bị: " + ex.getMessage(), 
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
 
         // 4. Equipment Table
         mainPanel.add(createEquipmentTablePanel());
@@ -159,17 +184,36 @@ public class MaintenanceRequestFormSwing extends JFrame {
 
         JPanel ngayYeuCauPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         ngayYeuCauPanel.add(new JLabel("Ngày yêu cầu:"));
-        tfNgayYeuCau = new JTextField(15);
+
+        // Set current date
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String currentDate = LocalDate.now().format(formatter);
+        tfNgayYeuCau = new JFormattedTextField();
+        tfNgayYeuCau.setValue(currentDate);
+        tfNgayYeuCau.setEditable(false);
+        tfNgayYeuCau.setColumns(15);
         ngayYeuCauPanel.add(tfNgayYeuCau);
         ngayYeuCauPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel khoaPhongPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         khoaPhongPanel.add(new JLabel("Khoa/Phòng:"));
-        tfKhoaPhong = new JTextField(15);
-        // default to current user's department id/name if available
+        tfKhoaPhong = new JTextField(25);
+        tfKhoaPhong.setEditable(false);
+
+        // Set department text
         if (currentUser != null && currentUser.getDepartmentId() != null) {
-            tfKhoaPhong.setText("Khoa/Phòng ID: " + currentUser.getDepartmentId());
+            try {
+                DepartmentDAO deptDao = new DepartmentDAO();
+                String deptName = deptDao.findNameById(currentUser.getDepartmentId());
+                tfKhoaPhong.setText(deptName != null ? deptName : "Chưa xác định");
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                tfKhoaPhong.setText("Lỗi khi tải thông tin khoa/phòng");
+            }
+        } else {
+            tfKhoaPhong.setText("Chưa xác định");
         }
+
         khoaPhongPanel.add(tfKhoaPhong);
         khoaPhongPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -203,21 +247,80 @@ public class MaintenanceRequestFormSwing extends JFrame {
             tablePanel.add(headerLabel, gbc);
         }
 
-        // Data Rows (3 hàng trống) — store references so we can read later
+        // Data Rows (3 hàng) — store references so we can read later
         for (int row = 1; row <= 3; row++) {
-            JTextField[] rowFields = new JTextField[headers.length];
-            for (int col = 0; col < headers.length; col++) {
-                gbc.gridx = col;
-                gbc.gridy = row;
-                gbc.weightx = (double) widths[col] / 690.0;
+            JComponent[] rowFields = new JComponent[headers.length];
 
-                JTextField cell = new JTextField();
-                cell.setPreferredSize(new Dimension(widths[col], 40));
-                cell.setBorder(new MatteBorder(0, (col == 0 ? 1 : 0), 1, 1, Color.BLACK));
-                cell.setHorizontalAlignment(SwingConstants.CENTER);
-                tablePanel.add(cell, gbc);
-                rowFields[col] = cell;
+            // STT column
+            gbc.gridx = 0;
+            gbc.gridy = row;
+            gbc.weightx = (double) widths[0] / 690.0;
+            JTextField sttField = new JTextField(String.valueOf(row));
+            sttField.setEditable(false);
+            sttField.setHorizontalAlignment(SwingConstants.CENTER);
+            sttField.setBorder(new MatteBorder(0, 1, 1, 1, Color.BLACK));
+            tablePanel.add(sttField, gbc);
+            rowFields[0] = sttField;
+
+            // Tên thiết bị column (Dropdown)
+            gbc.gridx = 1;
+            gbc.weightx = (double) widths[1] / 690.0;
+            JComboBox<String> equipmentCombo = new JComboBox<>();
+            equipmentCombo.addItem(""); // Empty first option
+            for (Equipment eq : allEquipment) {
+                // Show both code and name in the dropdown for better identification
+                equipmentCombo.addItem(String.format("%s - %s", eq.getCode(), eq.getName()));
             }
+            equipmentCombo.setPreferredSize(new Dimension(widths[1], 30));
+            equipmentCombo.setBorder(new MatteBorder(0, 0, 1, 1, Color.BLACK));
+            tablePanel.add(equipmentCombo, gbc);
+            rowFields[1] = equipmentCombo;
+
+            // Model column (auto-filled when equipment is selected)
+            gbc.gridx = 2;
+            gbc.weightx = (double) widths[2] / 690.0;
+            JTextField modelField = new JTextField();
+            modelField.setEditable(false);
+            modelField.setHorizontalAlignment(SwingConstants.CENTER);
+            modelField.setBorder(new MatteBorder(0, 0, 1, 1, Color.BLACK));
+            tablePanel.add(modelField, gbc);
+            rowFields[2] = modelField;
+
+            // Số lượng column
+            gbc.gridx = 3;
+            gbc.weightx = (double) widths[3] / 690.0;
+            JTextField qtyField = new JTextField();
+            qtyField.setHorizontalAlignment(SwingConstants.CENTER);
+            qtyField.setBorder(new MatteBorder(0, 0, 1, 1, Color.BLACK));
+            tablePanel.add(qtyField, gbc);
+            rowFields[3] = qtyField;
+
+            // Ghi chú column
+            gbc.gridx = 4;
+            gbc.weightx = (double) widths[4] / 690.0;
+            JTextField noteField = new JTextField();
+            noteField.setBorder(new MatteBorder(0, 0, 1, 1, Color.BLACK));
+            tablePanel.add(noteField, gbc);
+            rowFields[4] = noteField;
+
+            // Add action listener to auto-fill model when equipment is selected
+            equipmentCombo.addActionListener(e -> {
+                String selected = (String) equipmentCombo.getSelectedItem();
+                if (selected != null && !selected.isEmpty()) {
+                    // Extract the equipment code from the selected item
+                    String eqCode = selected.split(" - ")[0];
+                    for (Equipment eq : allEquipment) {
+                        if (eq.getCode().equals(eqCode)) {
+                            // Update model field with manufacturer
+                            modelField.setText(eq.getManufacturer() != null ? eq.getManufacturer() : "");
+                            break;
+                        }
+                    }
+                } else {
+                    modelField.setText("");
+                }
+            });
+
             equipmentRows.add(rowFields);
         }
         tablePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -279,8 +382,19 @@ public class MaintenanceRequestFormSwing extends JFrame {
     public static void main(String[] args) {
         // Đảm bảo giao diện được tạo trên Event Dispatch Thread (EDT)
         SwingUtilities.invokeLater(() -> {
-            // for standalone testing, no user context - pass null
-            new MaintenanceRequestFormSwing(null).setVisible(true);
+            try {
+                // Create a test user for standalone testing
+                User testUser = new User();
+                testUser.setId(1);
+                testUser.setDepartmentId(1);
+                testUser.setUsername("testuser");
+                testUser.setRole(User.Role.NV_BAO_TRI);
+
+                new MaintenanceRequestFormSwing(testUser).setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Lỗi khởi tạo ứng dụng: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         });
     }
 
@@ -312,19 +426,32 @@ public class MaintenanceRequestFormSwing extends JFrame {
             return;
         }
 
-        for (JTextField[] row : equipmentRows) {
-            // columns: 0=STT,1=Ten,2=Model,3=So luong,4=Ghi chu
-            String name = row[1].getText().trim();
-            if (name.isEmpty())
+        for (JComponent[] row : equipmentRows) {
+            // columns: 0=STT,1=Ten (JComboBox),2=Model (JTextField),3=So luong (JTextField),4=Ghi chu (JTextField)
+            JComboBox<String> nameCombo = (JComboBox<String>) row[1];
+            String selected = (String) nameCombo.getSelectedItem();
+            if (selected == null || selected.isEmpty()) {
                 continue;
-            String model = row[2].getText().trim();
-            String qty = row[3].getText().trim();
-            String note = row[4].getText().trim();
+            }
+            
+            // Extract equipment code from the selected item (format: "CODE - Name")
+            String eqCode = selected.split(" - ")[0];
+            String model = ((JTextField) row[2]).getText().trim();
+            String qty = ((JTextField) row[3]).getText().trim();
+            String note = ((JTextField) row[4]).getText().trim();
 
             try {
-                Equipment eq = equipmentDAO.findByName(name);
+                // Find equipment by code instead of name
+                Equipment eq = null;
+                for (Equipment e : allEquipment) {
+                    if (e.getCode().equals(eqCode)) {
+                        eq = e;
+                        break;
+                    }
+                }
+                
                 if (eq == null) {
-                    missing.add(name);
+                    missing.add(selected);
                     continue;
                 }
 
