@@ -6,16 +6,44 @@ import com.example.hospital.dao.MaintenanceRequestDAO;
 import com.example.hospital.models.Equipment;
 import com.example.hospital.models.MaintenanceRequest;
 import com.example.hospital.models.User;
+import com.itextpdf.io.image.ImageData;
+import com.itextpdf.io.image.ImageDataFactory;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.canvas.draw.SolidLine;
+import com.itextpdf.layout.properties.TextAlignment;
+import com.itextpdf.layout.properties.UnitValue;
 
 import javax.swing.*;
 import java.awt.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+
+// import com.itextpdf.io.image.ImageData;
+// import com.itextpdf.io.image.ImageDataFactory;
+// import com.itextpdf.kernel.pdf.PdfDocument;
+// import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.*;
+import com.itextpdf.layout.element.Image;
+// import com.itextpdf.layout.properties.TextAlignment;
+// import com.itextpdf.layout.properties.UnitValue;
+import com.itextpdf.kernel.colors.DeviceRgb;
+
+// import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+// import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MaintenanceRequestFormSwing extends JFrame {
 
@@ -69,9 +97,9 @@ public class MaintenanceRequestFormSwing extends JFrame {
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, 
-                "Lỗi khi tải danh sách thiết bị: " + ex.getMessage(), 
-                "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi khi tải danh sách thiết bị: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
 
         // 4. Equipment Table
@@ -393,106 +421,306 @@ public class MaintenanceRequestFormSwing extends JFrame {
                 new MaintenanceRequestFormSwing(testUser).setVisible(true);
             } catch (Exception e) {
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Lỗi khởi tạo ứng dụng: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
     }
 
     private JPanel createActionPanel() {
-        JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+
         JButton btnSave = new JButton("Lưu");
         JButton btnCancel = new JButton("Hủy");
+        JButton btnExport = new JButton("Xuất PDF");
 
         btnSave.addActionListener(e -> saveRequests());
         btnCancel.addActionListener(e -> dispose());
+        btnExport.addActionListener(e -> exportToPdf());
 
-        p.add(btnSave);
-        p.add(btnCancel);
-        return p;
+        panel.add(btnSave);
+        panel.add(btnExport);
+        panel.add(btnCancel);
+
+        return panel;
     }
 
-    private void saveRequests() {
-        // collect rows
-        EquipmentDAO equipmentDAO = new EquipmentDAO();
-        MaintenanceRequestDAO reqDao = new MaintenanceRequestDAO();
-
-        List<String> missing = new ArrayList<>();
-        int created = 0;
-
-        // Require a logged-in requester to create maintenance requests
-        if (currentUser == null) {
-            JOptionPane.showMessageDialog(this, "Bạn phải đăng nhập để tạo yêu cầu bảo trì.", "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
+    private void exportToPdf() {
+        // Validate input
+        if (equipmentRows.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Vui lòng thêm ít nhất một thiết bị trước khi xuất PDF",
+                    "Lỗi",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        for (JComponent[] row : equipmentRows) {
-            // columns: 0=STT,1=Ten (JComboBox),2=Model (JTextField),3=So luong (JTextField),4=Ghi chu (JTextField)
-            JComboBox<String> nameCombo = (JComboBox<String>) row[1];
-            String selected = (String) nameCombo.getSelectedItem();
-            if (selected == null || selected.isEmpty()) {
-                continue;
-            }
-            
-            // Extract equipment code from the selected item (format: "CODE - Name")
-            String eqCode = selected.split(" - ")[0];
-            String model = ((JTextField) row[2]).getText().trim();
-            String qty = ((JTextField) row[3]).getText().trim();
-            String note = ((JTextField) row[4]).getText().trim();
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Lưu phiếu yêu cầu bảo trì");
 
-            try {
-                // Find equipment by code instead of name
-                Equipment eq = null;
-                for (Equipment e : allEquipment) {
-                    if (e.getCode().equals(eqCode)) {
-                        eq = e;
-                        break;
+        // Set default file name with current date
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        fileChooser.setSelectedFile(new File("PhieuYeuCauBaoTri_" + timeStamp + ".pdf"));
+
+        // Set file filter
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("PDF Files", "pdf");
+        fileChooser.setFileFilter(filter);
+
+        int userSelection = fileChooser.showSaveDialog(this);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            String filePath = fileToSave.getAbsolutePath();
+
+            // Ensure the file has .pdf extension
+            if (!filePath.toLowerCase().endsWith(".pdf")) {
+                filePath += ".pdf";
+            }
+
+            try (PdfWriter writer = new PdfWriter(filePath);
+                    PdfDocument pdf = new PdfDocument(writer);
+                    Document document = new Document(pdf)) {
+
+                // Set document properties
+                document.setMargins(50, 50, 50, 50);
+
+                // Add hospital logo (if available)
+                try {
+                    URL logoUrl = getClass().getResource("/images/hospital_logo.png");
+                    if (logoUrl != null) {
+                        ImageData imageData = ImageDataFactory.create(logoUrl);
+                        Image logo = new Image(imageData).setWidth(100).setAutoScale(true);
+                        document.add(logo);
+                    }
+                } catch (Exception e) {
+                    // Logo not found or error loading, continue without it
+                }
+
+                // Add a header that mirrors the on-screen form (Mẫu 03 left, CHXHCNVN right)
+                Table headerTable = new Table(new float[] { 1, 1 });
+                headerTable.setWidth(UnitValue.createPercentValue(100));
+
+                // Left column: Mẫu 03 and hospital/department
+                Paragraph leftHeader = new Paragraph();
+                leftHeader.add(new Paragraph("Mẫu 03").setFontSize(10));
+                leftHeader.add(new Paragraph("BỆNH VIỆN ĐKKV TÂN CHÂU").setBold().setFontSize(12));
+                leftHeader.add(new Paragraph("KHOA/PHÒNG: " + tfKhoaPhong.getText()).setFontSize(11));
+
+                // Right column: CHXHCNVN and date
+                Paragraph rightHeader = new Paragraph();
+                rightHeader.add(new Paragraph("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM").setBold().setFontSize(12));
+                rightHeader.add(new Paragraph("Độc lập - Tự do - Hạnh phúc").setFontSize(11));
+                rightHeader.add(new Paragraph("Tân Châu, ngày " + tfNgayYeuCau.getText()).setFontSize(10));
+
+                headerTable.addCell(
+                        new Cell().add(leftHeader).setBorder(null).setPadding(0).setTextAlignment(TextAlignment.LEFT));
+                headerTable.addCell(new Cell().add(rightHeader).setBorder(null).setPadding(0)
+                        .setTextAlignment(TextAlignment.RIGHT));
+
+                document.add(headerTable);
+
+                // Thin separator line under header
+                document.add(new LineSeparator(new SolidLine(1f)).setMarginBottom(8f));
+
+                // Add title (centered, uppercase)
+                Paragraph title = new Paragraph("PHIẾU ĐỀ NGHỊ BẢO TRÌ THIẾT BỊ Y TẾ")
+                        .setTextAlignment(TextAlignment.CENTER)
+                        .setBold()
+                        .setFontSize(14)
+                        .setMarginTop(6f)
+                        .setMarginBottom(8f);
+                document.add(title);
+
+                // Add request info
+                Table infoTable = new Table(2);
+                infoTable.setWidth(UnitValue.createPercentValue(100));
+
+                // Add request date
+                infoTable.addCell(createCell("Ngày yêu cầu:", true));
+                infoTable.addCell(createCell(tfNgayYeuCau.getText(), false));
+
+                // Add department
+                infoTable.addCell(createCell("Khoa/Phòng:", true));
+                infoTable.addCell(createCell(tfKhoaPhong.getText(), false));
+
+                // Add requester
+                infoTable.addCell(createCell("Người yêu cầu:", true));
+                infoTable.addCell(createCell(currentUser.getFullname(), false));
+
+                document.add(infoTable);
+                document.add(new Paragraph("\n"));
+
+                // Add equipment list
+                Paragraph equipmentTitle = new Paragraph("DANH SÁCH THIẾT BỊ CẦN BẢO TRÌ")
+                        .setBold()
+                        .setTextAlignment(TextAlignment.CENTER)
+                        .setMarginBottom(10);
+                document.add(equipmentTitle);
+
+                // Create equipment table
+                Table equipmentTable = new Table(new float[] { 1, 3, 2, 2, 3 });
+                equipmentTable.setWidth(UnitValue.createPercentValue(100));
+
+                // Add table headers
+                String[] headers = { "STT", "Tên thiết bị", "Mã thiết bị", "Số lượng", "Tình trạng hư hỏng" };
+                for (String header : headers) {
+                    equipmentTable.addHeaderCell(createCell(header, true));
+                }
+
+                // Add equipment rows
+                int stt = 1;
+                for (JComponent[] row : equipmentRows) {
+                    JComboBox<String> nameCombo = (JComboBox<String>) row[1];
+                    String selected = (String) nameCombo.getSelectedItem();
+
+                    if (selected != null && !selected.isEmpty()) {
+                        String eqName = selected.contains(" - ") ? selected.split(" - ")[1] : selected;
+                        String model = ((JTextField) row[2]).getText().trim();
+                        String qty = ((JTextField) row[3]).getText().trim();
+                        String note = ((JTextField) row[4]).getText().trim();
+
+                        equipmentTable.addCell(createCell(String.valueOf(stt++), false));
+                        equipmentTable.addCell(createCell(eqName, false));
+                        equipmentTable.addCell(createCell(model, false));
+                        equipmentTable.addCell(createCell(qty, false));
+                        equipmentTable.addCell(createCell(note, false));
                     }
                 }
-                
-                if (eq == null) {
-                    missing.add(selected);
-                    continue;
+
+                document.add(equipmentTable);
+
+                // Add signature section
+                document.add(new Paragraph("\n\n"));
+                Table signatureTable = new Table(2);
+                signatureTable.setWidth(UnitValue.createPercentValue(100));
+
+                signatureTable.addCell(createCell("Người lập phiếu", true).setTextAlignment(TextAlignment.CENTER));
+                signatureTable
+                        .addCell(createCell("Xác nhận của trưởng khoa", true).setTextAlignment(TextAlignment.CENTER));
+
+                signatureTable.addCell(createCell("\n\n\n", false).setTextAlignment(TextAlignment.CENTER));
+                signatureTable.addCell(createCell("\n\n\n", false).setTextAlignment(TextAlignment.CENTER));
+
+                signatureTable
+                        .addCell(createCell(currentUser.getFullname(), true).setTextAlignment(TextAlignment.CENTER));
+                signatureTable.addCell(createCell("(Ký, ghi rõ họ tên)", false).setTextAlignment(TextAlignment.CENTER));
+
+                document.add(signatureTable);
+
+                // Show success message
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Xuất phiếu yêu cầu bảo trì thành công!\n" + filePath,
+                        "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                // Open the saved PDF
+                if (java.awt.Desktop.isDesktopSupported()) {
+                    try {
+                        File pdfFile = new File(filePath);
+                        java.awt.Desktop.getDesktop().open(pdfFile);
+                    } catch (IOException e) {
+                        // Could not open file, just show success message
+                    }
                 }
 
-                MaintenanceRequest r = new MaintenanceRequest();
-                r.setEquipmentId(eq.getId());
-                // currentUser is guaranteed non-null above
-                r.setRequesterId(currentUser.getId());
-                // department must be present per DB schema
-                Integer depId = currentUser.getDepartmentId();
-                if (depId == null || depId <= 0) {
-                    JOptionPane.showMessageDialog(this,
-                            "Người dùng hiện tại chưa có khoa/phòng. Không thể tạo yêu cầu.", "Lỗi",
-                            JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                r.setDepartmentId(depId);
-                StringBuilder desc = new StringBuilder();
-                if (!model.isEmpty())
-                    desc.append("Model: ").append(model).append("; ");
-                if (!qty.isEmpty())
-                    desc.append("Số lượng: ").append(qty).append("; ");
-                if (!note.isEmpty())
-                    desc.append("Ghi chú: ").append(note).append("; ");
-                r.setIssueDescription(desc.toString());
-                // keep defaults for priority/status/requestDate
-
-                reqDao.create(r);
-                created++;
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Lỗi khi lưu yêu cầu: " + ex.getMessage());
-                return;
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Lỗi khi xuất file PDF: " + e.getMessage(),
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
             }
         }
-
-        if (!missing.isEmpty()) {
-            String msg = "Không tìm thấy các thiết bị: \n" + String.join("\n", missing) + "\nBỏ qua chúng.";
-            JOptionPane.showMessageDialog(this, msg, "Thiết bị không tồn tại", JOptionPane.WARNING_MESSAGE);
-        }
-
-        JOptionPane.showMessageDialog(this, "Đã tạo " + created + " yêu cầu bảo trì.");
-        dispose();
     }
-}
+
+    // Helper method to create table cells
+    private Cell createCell(String content, boolean isHeader) {
+        Paragraph p = new Paragraph(content);
+        p.setFontSize(10);
+        Cell cell = new Cell().add(p);
+        cell.setPadding(5);
+
+        if (isHeader) {
+            cell.setBold();
+            cell.setBackgroundColor(new DeviceRgb(221, 221, 221));
+        }
+        return cell;
+    }
+
+    private void saveRequests() {
+        try {
+            // Get the current date as LocalDateTime
+            java.time.LocalDateTime requestDate = java.time.LocalDateTime.now();
+
+            // Determine department id (0 if unknown)
+            int departmentId = 0;
+            if (currentUser != null && currentUser.getDepartmentId() != null) {
+                departmentId = currentUser.getDepartmentId();
+            }
+
+            // Create and save maintenance requests for each equipment in the form
+            MaintenanceRequestDAO requestDAO = new MaintenanceRequestDAO();
+            int savedCount = 0;
+
+            for (JComponent[] row : equipmentRows) {
+                @SuppressWarnings("unchecked")
+                JComboBox<String> nameCombo = (JComboBox<String>) row[1];
+                String selected = (String) nameCombo.getSelectedItem();
+
+                if (selected != null && !selected.isEmpty()) {
+                    // Extract equipment code from the selected item (format: "CODE - Name")
+                    String eqCode = selected.split(" - ")[0];
+
+                    // Find the equipment by code
+                    for (Equipment equipment : allEquipment) {
+                        if (equipment.getCode().equals(eqCode)) {
+                            // Create a new maintenance request
+                            MaintenanceRequest request = new MaintenanceRequest();
+                            request.setRequestDate(requestDate);
+                            request.setDepartmentId(departmentId);
+                            request.setEquipmentId(equipment.getId());
+                            request.setStatus("CHO_XU_LY"); // Default status matches model
+                            request.setRequesterId(currentUser != null ? currentUser.getId() : 0);
+
+                            // Get quantity and notes from the form
+                            String quantity = ((JTextField) row[3]).getText().trim();
+                            String notes = ((JTextField) row[4]).getText().trim();
+
+                            // Put notes into issueDescription so it persists
+                            request.setIssueDescription(notes);
+
+                            // Save the request
+                            requestDAO.create(request);
+                            savedCount++;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (savedCount > 0) {
+                JOptionPane.showMessageDialog(this,
+                        String.format("Đã lưu %d yêu cầu bảo trì", savedCount),
+                        "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                // Close the form after saving
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Không có yêu cầu bảo trì nào được lưu. Vui lòng kiểm tra lại thông tin.",
+                        "Cảnh báo",
+                        JOptionPane.WARNING_MESSAGE);
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi khi lưu yêu cầu bảo trì: " + ex.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    }
