@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 import com.example.hospital.dao.MaintenanceRequestDAO;
+import com.example.hospital.dao.EquipmentDAO;
 import com.example.hospital.models.MaintenanceRequest;
 import com.example.hospital.models.User;
 import com.example.hospital.ui.RequestDialog;
@@ -31,7 +32,8 @@ public class RequestPanel extends JPanel {
         if (currentUser != null && currentUser.isQLThietBi()) {
             JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
             top.add(new JLabel("Chọn trạng thái: "));
-            JComboBox<String> cbStatus = new JComboBox<>(new String[] { "CHO_XU_LY", "DA_LAP_KE_HOACH", "DA_TU_CHOI" });
+            JComboBox<String> cbStatus = new JComboBox<>(
+                    new String[] { "CHO_XU_LY", "DA_LAP_KE_HOACH", "DA_TU_CHOI" });
             top.add(cbStatus);
             JButton btnUpdate = new JButton("Cập nhật trạng thái");
             top.add(btnUpdate);
@@ -58,7 +60,7 @@ public class RequestPanel extends JPanel {
 
             // synchronize combo with selected row
             table = new JTable(new DefaultTableModel(
-                    new String[] { "ID", "Thiết bị", "Mô tả", "Ngày", "Trạng thái" }, 0));
+                    new String[] { "ID", "Thiết bị", "Mô tả", "Ngày", "Trạng thái", "Trạng thái kế hoạch" }, 0));
             table.getSelectionModel().addListSelectionListener(ev -> {
                 if (ev.getValueIsAdjusting())
                     return;
@@ -66,8 +68,10 @@ public class RequestPanel extends JPanel {
                 if (r < 0)
                     return;
                 Object s = table.getValueAt(r, 4);
-                if (s != null)
-                    cbStatus.setSelectedItem(s.toString());
+                if (s != null) {
+                    String statusCode = statusVietnameseToCode(s.toString());
+                    cbStatus.setSelectedItem(statusCode);
+                }
             });
 
             add(top, BorderLayout.NORTH);
@@ -98,7 +102,7 @@ public class RequestPanel extends JPanel {
             btnAdd.addActionListener(e -> openCreateDialog());
             add(btnAdd, BorderLayout.NORTH);
             table = new JTable(new DefaultTableModel(
-                    new String[] { "ID", "Thiết bị", "Mô tả", "Ngày", "Trạng thái" }, 0));
+                    new String[] { "ID", "Thiết bị", "Mô tả", "Ngày", "Trạng thái", "Trạng thái kế hoạch" }, 0));
         }
 
         add(new JScrollPane(table), BorderLayout.CENTER);
@@ -147,14 +151,92 @@ public class RequestPanel extends JPanel {
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             model.setRowCount(0);
 
+            EquipmentDAO equipmentDao = new EquipmentDAO();
+            com.example.hospital.dao.MaintenanceRequestDAO reqDao = new com.example.hospital.dao.MaintenanceRequestDAO();
             for (MaintenanceRequest r : list) {
-                model.addRow(new Object[] { r.getId(), r.getEquipmentId(), r.getIssueDescription(), r.getRequestDate(),
-                        r.getStatus() });
+                String equipmentName = String.valueOf(r.getEquipmentId());
+                try {
+                    var eq = equipmentDao.findById(r.getEquipmentId());
+                    if (eq != null) {
+                        equipmentName = eq.getName();
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                String vietnameseStatus = statusCodeToVietnamese(r.getStatus());
+                String planStatusCode = null;
+                try {
+                    planStatusCode = reqDao.getLatestPlanStatus(r.getId());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                String planVietnamese = (planStatusCode == null) ? "-" : planStatusCodeToVietnamese(planStatusCode);
+                model.addRow(new Object[] { r.getId(), equipmentName, r.getIssueDescription(), r.getRequestDate(),
+                        vietnameseStatus, planVietnamese });
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Convert status code to Vietnamese display text
+     */
+    private String statusCodeToVietnamese(String statusCode) {
+        if (statusCode == null) {
+            return "Chưa xác định";
+        }
+        switch (statusCode) {
+            case "CHO_XU_LY":
+                return "Chờ xử lý";
+            case "DA_LAP_KE_HOACH":
+                return "Đã lập kế hoạch";
+            case "DA_TU_CHOI":
+                return "Đã từ chối";
+            case "HOAN_THANH":
+                return "Hoàn thành";
+            default:
+                return statusCode;
+        }
+    }
+
+    /**
+     * Convert Vietnamese status to status code
+     */
+    private String statusVietnameseToCode(String vietnameseStatus) {
+        if (vietnameseStatus == null) {
+            return "CHO_XU_LY";
+        }
+        switch (vietnameseStatus) {
+            case "Chờ xử lý":
+                return "CHO_XU_LY";
+            case "Đã lập kế hoạch":
+                return "DA_LAP_KE_HOACH";
+            case "Đã từ chối":
+                return "DA_TU_CHOI";
+            case "Hoàn thành":
+                return "HOAN_THANH";
+            default:
+                return vietnameseStatus;
+        }
+    }
+
+    private String planStatusCodeToVietnamese(String statusCode) {
+        if (statusCode == null)
+            return "-";
+        switch (statusCode) {
+            case "CHO_THUC_HIEN":
+                return "Chờ thực hiện";
+            case "DANG_THUC_HIEN":
+                return "Đang thực hiện";
+            case "CHO_NGHIEM_THU":
+                return "Chờ nghiệm thu";
+            case "HOAN_THANH":
+                return "Hoàn thành";
+            default:
+                return statusCode;
         }
     }
 

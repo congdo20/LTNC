@@ -209,4 +209,20 @@ public class MaintenanceRequestDAO {
             ps.executeUpdate();
         }
     }
+
+    /**
+     * Get the latest plan status for a given request (null if no plan exists)
+     */
+    public String getLatestPlanStatus(int requestId) throws SQLException {
+        String sql = "SELECT status FROM maintenance_plans WHERE request_id = ? ORDER BY id DESC LIMIT 1";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, requestId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("status");
+                }
+            }
+        }
+        return null;
+    }
 }
