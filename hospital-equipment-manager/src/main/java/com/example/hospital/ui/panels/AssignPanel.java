@@ -39,12 +39,15 @@ public class AssignPanel extends JPanel {
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton btnAssign = new JButton("Phân công");
         JButton btnRefresh = new JButton("Làm mới");
+        JButton btnApprove = new JButton("Xác nhận nghiệm thu");
         bottom.add(btnAssign);
+        bottom.add(btnApprove);
         bottom.add(btnRefresh);
         add(bottom, BorderLayout.SOUTH);
 
         btnAssign.addActionListener(e -> assignSelected());
         btnRefresh.addActionListener(e -> loadData());
+        btnApprove.addActionListener(e -> approveSelected());
 
         loadData();
     }
@@ -142,14 +145,51 @@ public class AssignPanel extends JPanel {
                     // ignore
                 }
 
-                String status = m.isCompleted() ? "HOAN_THANH" : "CHO_THUC_HIEN";
+                String planStatus = "";
+                try {
+                    String code = maintDao.getPlanStatus(m.getId());
+                    planStatus = code == null ? "-" : code;
+                } catch (Exception ex) {
+                    planStatus = m.isCompleted() ? "HOAN_THANH" : "CHO_THUC_HIEN";
+                }
 
                 model.addRow(new Object[] { m.getId(), m.getRequestId(), eqName, m.getScheduleDate(), planner,
-                        m.getNote(), status, assignedTech });
+                        m.getNote(), planStatus, assignedTech });
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Lỗi tải phân công: " + ex.getMessage());
+        }
+    }
+
+    private void approveSelected() {
+        int[] sel = table.getSelectedRows();
+        if (sel == null || sel.length == 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ít nhất một kế hoạch để nghiệm thu");
+            return;
+        }
+
+        int approved = 0;
+        try {
+            for (int r : sel) {
+                int planId = (Integer) model.getValueAt(r, 0);
+                // only approve plans that are pending approval
+                String status = maintDao.getPlanStatus(planId);
+                if ("CHO_NGHIEM_THU".equals(status)) {
+                    maintDao.approvePlan(planId);
+                    approved++;
+                }
+            }
+            if (approved > 0) {
+                JOptionPane.showMessageDialog(this, "Đã nghiệm thu và hoàn thành " + approved + " kế hoạch");
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Không có kế hoạch nào ở trạng thái 'CHỜ NGHIỆM THU' để nghiệm thu");
+            }
+            loadData();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi khi nghiệm thu: " + ex.getMessage());
         }
     }
 }

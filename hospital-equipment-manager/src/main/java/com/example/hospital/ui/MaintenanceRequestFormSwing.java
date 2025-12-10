@@ -13,6 +13,12 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.canvas.draw.SolidLine;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
+import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.io.font.constants.StandardFonts;
+import com.itextpdf.kernel.font.PdfFontFactory.EmbeddingStrategy;
+import com.itextpdf.io.font.FontProgram;
+import com.itextpdf.io.font.FontProgramFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -480,10 +486,28 @@ public class MaintenanceRequestFormSwing extends JFrame {
                     PdfDocument pdf = new PdfDocument(writer);
                     Document document = new Document(pdf)) {
 
-                // Set document properties
-                document.setMargins(50, 50, 50, 50);
+                // Initialize font that supports Vietnamese using embedded font
+                // Using DejaVuSans which supports Vietnamese characters
+                PdfFont vietnameseFont = null;
+                PdfFont vietnameseFontBold = null;
 
-                // Add hospital logo (if available)
+                try {
+                    // Try to use a system font that supports Vietnamese
+                    FontProgram fontProgram = FontProgramFactory.createFont("c:\\windows\\fonts\\arial.ttf");
+                    vietnameseFont = PdfFontFactory.createFont(fontProgram, "Identity-H",
+                            EmbeddingStrategy.PREFER_EMBEDDED);
+
+                    FontProgram fontProgramBold = FontProgramFactory.createFont("c:\\windows\\fonts\\arialbd.ttf");
+                    vietnameseFontBold = PdfFontFactory.createFont(fontProgramBold, "Identity-H",
+                            EmbeddingStrategy.PREFER_EMBEDDED);
+                } catch (Exception e) {
+                    // Fallback to default fonts if system fonts not found
+                    vietnameseFont = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+                    vietnameseFontBold = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+                }
+
+                // Set document properties
+                document.setMargins(50, 50, 50, 50); // Add hospital logo (if available)
                 try {
                     URL logoUrl = getClass().getResource("/images/hospital_logo.png");
                     if (logoUrl != null) {
@@ -501,15 +525,18 @@ public class MaintenanceRequestFormSwing extends JFrame {
 
                 // Left column: Mẫu 03 and hospital/department
                 Paragraph leftHeader = new Paragraph();
-                leftHeader.add(new Paragraph("Mẫu 03").setFontSize(10));
-                leftHeader.add(new Paragraph("BỆNH VIỆN ĐKKV TÂN CHÂU").setBold().setFontSize(12));
-                leftHeader.add(new Paragraph("KHOA/PHÒNG: " + tfKhoaPhong.getText()).setFontSize(11));
+                leftHeader.add(new Paragraph("Mẫu 03").setFont(vietnameseFont).setFontSize(10));
+                leftHeader.add(new Paragraph("BỆNH VIỆN ĐKKV TÂN CHÂU").setFont(vietnameseFontBold).setFontSize(12));
+                leftHeader.add(
+                        new Paragraph("KHOA/PHÒNG: " + tfKhoaPhong.getText()).setFont(vietnameseFont).setFontSize(11));
 
                 // Right column: CHXHCNVN and date
                 Paragraph rightHeader = new Paragraph();
-                rightHeader.add(new Paragraph("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM").setBold().setFontSize(12));
-                rightHeader.add(new Paragraph("Độc lập - Tự do - Hạnh phúc").setFontSize(11));
-                rightHeader.add(new Paragraph("Tân Châu, ngày " + tfNgayYeuCau.getText()).setFontSize(10));
+                rightHeader.add(new Paragraph("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM").setFont(vietnameseFontBold)
+                        .setFontSize(12));
+                rightHeader.add(new Paragraph("Độc lập - Tự do - Hạnh phúc").setFont(vietnameseFont).setFontSize(11));
+                rightHeader.add(new Paragraph("Tân Châu, ngày " + tfNgayYeuCau.getText()).setFont(vietnameseFont)
+                        .setFontSize(10));
 
                 headerTable.addCell(
                         new Cell().add(leftHeader).setBorder(null).setPadding(0).setTextAlignment(TextAlignment.LEFT));
@@ -523,8 +550,8 @@ public class MaintenanceRequestFormSwing extends JFrame {
 
                 // Add title (centered, uppercase)
                 Paragraph title = new Paragraph("PHIẾU ĐỀ NGHỊ BẢO TRÌ THIẾT BỊ Y TẾ")
+                        .setFont(vietnameseFontBold)
                         .setTextAlignment(TextAlignment.CENTER)
-                        .setBold()
                         .setFontSize(14)
                         .setMarginTop(6f)
                         .setMarginBottom(8f);
@@ -535,23 +562,25 @@ public class MaintenanceRequestFormSwing extends JFrame {
                 infoTable.setWidth(UnitValue.createPercentValue(100));
 
                 // Add request date
-                infoTable.addCell(createCell("Ngày yêu cầu:", true));
-                infoTable.addCell(createCell(tfNgayYeuCau.getText(), false));
+                infoTable.addCell(createCellWithFont("Ngày yêu cầu:", true, vietnameseFontBold, vietnameseFont));
+                infoTable
+                        .addCell(createCellWithFont(tfNgayYeuCau.getText(), false, vietnameseFontBold, vietnameseFont));
 
                 // Add department
-                infoTable.addCell(createCell("Khoa/Phòng:", true));
-                infoTable.addCell(createCell(tfKhoaPhong.getText(), false));
+                infoTable.addCell(createCellWithFont("Khoa/Phòng:", true, vietnameseFontBold, vietnameseFont));
+                infoTable.addCell(createCellWithFont(tfKhoaPhong.getText(), false, vietnameseFontBold, vietnameseFont));
 
                 // Add requester
-                infoTable.addCell(createCell("Người yêu cầu:", true));
-                infoTable.addCell(createCell(currentUser.getFullname(), false));
+                infoTable.addCell(createCellWithFont("Người yêu cầu:", true, vietnameseFontBold, vietnameseFont));
+                infoTable.addCell(
+                        createCellWithFont(currentUser.getFullname(), false, vietnameseFontBold, vietnameseFont));
 
                 document.add(infoTable);
                 document.add(new Paragraph("\n"));
 
                 // Add equipment list
                 Paragraph equipmentTitle = new Paragraph("DANH SÁCH THIẾT BỊ CẦN BẢO TRÌ")
-                        .setBold()
+                        .setFont(vietnameseFontBold)
                         .setTextAlignment(TextAlignment.CENTER)
                         .setMarginBottom(10);
                 document.add(equipmentTitle);
@@ -563,7 +592,7 @@ public class MaintenanceRequestFormSwing extends JFrame {
                 // Add table headers
                 String[] headers = { "STT", "Tên thiết bị", "Mã thiết bị", "Số lượng", "Tình trạng hư hỏng" };
                 for (String header : headers) {
-                    equipmentTable.addHeaderCell(createCell(header, true));
+                    equipmentTable.addHeaderCell(createCellWithFont(header, true, vietnameseFontBold, vietnameseFont));
                 }
 
                 // Add equipment rows
@@ -578,11 +607,12 @@ public class MaintenanceRequestFormSwing extends JFrame {
                         String qty = ((JTextField) row[3]).getText().trim();
                         String note = ((JTextField) row[4]).getText().trim();
 
-                        equipmentTable.addCell(createCell(String.valueOf(stt++), false));
-                        equipmentTable.addCell(createCell(eqName, false));
-                        equipmentTable.addCell(createCell(model, false));
-                        equipmentTable.addCell(createCell(qty, false));
-                        equipmentTable.addCell(createCell(note, false));
+                        equipmentTable.addCell(
+                                createCellWithFont(String.valueOf(stt++), false, vietnameseFontBold, vietnameseFont));
+                        equipmentTable.addCell(createCellWithFont(eqName, false, vietnameseFontBold, vietnameseFont));
+                        equipmentTable.addCell(createCellWithFont(model, false, vietnameseFontBold, vietnameseFont));
+                        equipmentTable.addCell(createCellWithFont(qty, false, vietnameseFontBold, vietnameseFont));
+                        equipmentTable.addCell(createCellWithFont(note, false, vietnameseFontBold, vietnameseFont));
                     }
                 }
 
@@ -593,16 +623,24 @@ public class MaintenanceRequestFormSwing extends JFrame {
                 Table signatureTable = new Table(2);
                 signatureTable.setWidth(UnitValue.createPercentValue(100));
 
-                signatureTable.addCell(createCell("Người lập phiếu", true).setTextAlignment(TextAlignment.CENTER));
+                signatureTable.addCell(createCellWithFont("Người lập phiếu", true, vietnameseFontBold, vietnameseFont)
+                        .setTextAlignment(TextAlignment.CENTER));
                 signatureTable
-                        .addCell(createCell("Xác nhận của trưởng khoa", true).setTextAlignment(TextAlignment.CENTER));
+                        .addCell(
+                                createCellWithFont("Xác nhận của trưởng khoa", true, vietnameseFontBold, vietnameseFont)
+                                        .setTextAlignment(TextAlignment.CENTER));
 
-                signatureTable.addCell(createCell("\n\n\n", false).setTextAlignment(TextAlignment.CENTER));
-                signatureTable.addCell(createCell("\n\n\n", false).setTextAlignment(TextAlignment.CENTER));
+                signatureTable.addCell(createCellWithFont("\n\n\n", false, vietnameseFontBold, vietnameseFont)
+                        .setTextAlignment(TextAlignment.CENTER));
+                signatureTable.addCell(createCellWithFont("\n\n\n", false, vietnameseFontBold, vietnameseFont)
+                        .setTextAlignment(TextAlignment.CENTER));
 
                 signatureTable
-                        .addCell(createCell(currentUser.getFullname(), true).setTextAlignment(TextAlignment.CENTER));
-                signatureTable.addCell(createCell("(Ký, ghi rõ họ tên)", false).setTextAlignment(TextAlignment.CENTER));
+                        .addCell(createCellWithFont(currentUser.getFullname(), true, vietnameseFontBold, vietnameseFont)
+                                .setTextAlignment(TextAlignment.CENTER));
+                signatureTable
+                        .addCell(createCellWithFont("(Ký, ghi rõ họ tên)", false, vietnameseFontBold, vietnameseFont)
+                                .setTextAlignment(TextAlignment.CENTER));
 
                 document.add(signatureTable);
 
@@ -634,7 +672,20 @@ public class MaintenanceRequestFormSwing extends JFrame {
         }
     }
 
-    // Helper method to create table cells
+    // Helper method to create table cells with font support
+    private Cell createCellWithFont(String content, boolean isHeader, PdfFont boldFont, PdfFont regularFont) {
+        Paragraph p = new Paragraph(content);
+        p.setFont(isHeader ? boldFont : regularFont).setFontSize(10);
+        Cell cell = new Cell().add(p);
+        cell.setPadding(5);
+
+        if (isHeader) {
+            cell.setBackgroundColor(new DeviceRgb(221, 221, 221));
+        }
+        return cell;
+    }
+
+    // Old method kept for backward compatibility if needed
     private Cell createCell(String content, boolean isHeader) {
         Paragraph p = new Paragraph(content);
         p.setFontSize(10);

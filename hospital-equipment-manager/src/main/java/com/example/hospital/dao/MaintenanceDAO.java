@@ -323,6 +323,22 @@ public class MaintenanceDAO {
     }
 
     /**
+     * Get the status code for a plan
+     */
+    public String getPlanStatus(int planId) throws SQLException {
+        String sql = "SELECT status FROM maintenance_plans WHERE id = ?";
+        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, planId);
+            try (ResultSet rs = p.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("status");
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Mark a plan completed, update its status and notify the requester of the
      * linked maintenance request.
      */

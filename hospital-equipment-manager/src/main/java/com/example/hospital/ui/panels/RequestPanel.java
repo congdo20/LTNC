@@ -39,6 +39,8 @@ public class RequestPanel extends JPanel {
             top.add(btnUpdate);
             JButton btnCreatePlan = new JButton("Tạo kế hoạch");
             top.add(btnCreatePlan);
+            JButton btnRefresh = new JButton("Làm mới");
+            top.add(btnRefresh);
 
             btnUpdate.addActionListener(ae -> {
                 int r = table.getSelectedRow();
@@ -97,6 +99,8 @@ public class RequestPanel extends JPanel {
                 helper.createPlansFor(selected, this);
                 loadData();
             });
+            // refresh button for managers
+            btnRefresh.addActionListener(ae -> loadData());
         } else {
             JButton btnAdd = new JButton("Tạo yêu cầu");
             btnAdd.addActionListener(e -> openCreateDialog());
