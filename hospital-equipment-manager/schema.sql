@@ -149,3 +149,8 @@ CREATE TABLE IF NOT EXISTS notifications (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+
+-- Run this on your database
+ALTER TABLE maintenance_plans 
+MODIFY COLUMN status ENUM('CHO_THUC_HIEN', 'DANG_THUC_HIEN', 'CHO_NGHIEM_THU', 'HOAN_THANH') 
+DEFAULT 'CHO_THUC_HIEN';

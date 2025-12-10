@@ -25,7 +25,7 @@ public class TaskPanel extends JPanel {
         add(title, BorderLayout.NORTH);
 
         model = new javax.swing.table.DefaultTableModel(
-                new String[] { "Mã nhiệm vụ", "Thiết bị", "Hạn", "Người phân công", "Trạng thái" }, 0) {
+                new String[] { "Mã nhiệm vụ", "Thiết bị", "Hạn", "Người phân công", "Trạng thái", "Task Object" }, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
                 return false;
@@ -35,7 +35,7 @@ public class TaskPanel extends JPanel {
         add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton btnComplete = new JButton("Hoàn thành");
+        JButton btnComplete = new JButton("Đánh dấu hoàn thành");
         JButton btnRefresh = new JButton("Làm mới");
         bottom.add(btnComplete);
         bottom.add(btnRefresh);
@@ -66,6 +66,7 @@ public class TaskPanel extends JPanel {
                     if (eq != null)
                         eqName = eq.getName();
                 } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
 
                 String planner = "";
@@ -76,11 +77,19 @@ public class TaskPanel extends JPanel {
                             planner = u.getFullname();
                     }
                 } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
 
-                String status = m.isCompleted() ? "HOAN_THANH" : "CHO_THUC_HIEN";
+                // Get the actual status from the task
+                String status = "";
+                try {
+                    status = getStatusText(m);
+                } catch (Exception ex) {
+                    status = "KHÔNG XÁC ĐỊNH";
+                    ex.printStackTrace();
+                }
 
-                model.addRow(new Object[] { m.getId(), eqName, m.getScheduleDate(), planner, status });
+                model.addRow(new Object[] { m.getId(), eqName, m.getScheduleDate(), planner, status, m });
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -88,21 +97,41 @@ public class TaskPanel extends JPanel {
         }
     }
 
-    private void markSelectedComplete(com.example.hospital.models.User user) {
-        int r = table.getSelectedRow();
-        if (r < 0) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhiệm vụ để hoàn thành");
-            return;
-        }
-        int taskId = (Integer) model.getValueAt(r, 0);
-        try {
-            // use DAO method that also notifies requester
-            maintDao.markPlanCompleted(taskId);
-            JOptionPane.showMessageDialog(this, "Đã đánh dấu hoàn thành nhiệm vụ");
-            loadData(user);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi khi hoàn thành: " + ex.getMessage());
-        }
+    /**
+     * Get the display text for a task status
+     */
+    private String getStatusText(com.example.hospital.models.MaintenanceTask task) {
+        return task.isCompleted() ? "HOÀN THÀNH" : "CHỜ THỰC HIỆN";
     }
+
+private void markSelectedComplete(com.example.hospital.models.User user) {
+    int r = table.getSelectedRow();
+    if (r < 0) {
+        JOptionPane.showMessageDialog(this, "Vui lòng chọn nhiệm vụ");
+        return;
+    }
+    
+    int taskId = (Integer) model.getValueAt(r, 0);
+    com.example.hospital.models.MaintenanceTask task = (com.example.hospital.models.MaintenanceTask) model.getValueAt(r, 5);
+    
+    try {
+        // If user is technician, mark as pending approval
+        if (user.isNvBaoTri()) {
+            maintDao.markPlanPendingApproval(taskId);
+            JOptionPane.showMessageDialog(this, "Đã đánh dấu hoàn thành. Chờ quản lý thiết bị nghiệm thu.");
+        } 
+        // If user is equipment manager, approve the task
+        else if (user.isQLThietBi()) {
+            maintDao.approvePlan(taskId);
+            JOptionPane.showMessageDialog(this, "Đã xác nhận nghiệm thu và hoàn thành nhiệm vụ");
+        }
+        
+        loadData(user);
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật trạng thái: " + ex.getMessage());
+    }
+}
+
+    
 }
