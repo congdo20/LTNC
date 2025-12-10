@@ -104,7 +104,7 @@ public class MainFrame extends JFrame {
         }
 
         if (user.isQLThietBi()) {
-            tabs.addTab("Thiết bị", new EquipmentPanel());
+            tabs.addTab("Thiết bị", new EquipmentPanel(currentUser));
             tabs.addTab("Yêu cầu bảo trì", new RequestPanel(currentUser));
             tabs.addTab("Phân công", new AssignPanel());
         }

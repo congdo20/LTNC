@@ -7,6 +7,7 @@ import com.example.hospital.util.ImageUtil;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import com.example.hospital.models.User;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -16,8 +17,10 @@ public class EquipmentPanel extends JPanel {
     private JTable table;
     private DefaultTableModel model;
     private JLabel imagePreview;
+    private User currentUser;
 
-    public EquipmentPanel() {
+    public EquipmentPanel(User user) {
+        this.currentUser = user;
         setLayout(new BorderLayout());
 
         model = new DefaultTableModel(
@@ -74,16 +77,24 @@ public class EquipmentPanel extends JPanel {
 
         JButton btnAdd = new JButton("Thêm");
         JButton btnEdit = new JButton("Sửa");
+        JButton btnDelete = new JButton("Xóa");
         JButton btnRefresh = new JButton("Làm mới");
 
         JPanel panel = new JPanel();
         panel.add(btnAdd);
         panel.add(btnEdit);
+        
+        // Only show delete button for QL_THIET_BI role
+        if (currentUser != null && currentUser.isQLThietBi()) {
+            panel.add(btnDelete);
+        }
+        
         panel.add(btnRefresh);
         add(panel, BorderLayout.SOUTH);
 
         btnAdd.addActionListener(e -> addEquipment());
         btnEdit.addActionListener(e -> editEquipment());
+        btnDelete.addActionListener(e -> deleteEquipment());
         btnRefresh.addActionListener(e -> loadData());
 
         loadData();
@@ -122,9 +133,13 @@ public class EquipmentPanel extends JPanel {
         JTextField tfName = new JTextField();
         JTextField tfManu = new JTextField();
         JTextField tfYear = new JTextField();
-        JTextField tfStatus = new JTextField("TOT");
+        
+        // Create status combo box with options
+        JComboBox<String> cbStatus = new JComboBox<>(new String[]{"TOT", "BAO_TRI", "HU_HONG"});
+        cbStatus.setSelectedItem("TOT");
+        
         JTextField tfImage = new JTextField();
-        javax.swing.JComboBox<String> cbDept = new javax.swing.JComboBox<>();
+        JComboBox<String> cbDept = new JComboBox<>();
 
         // populate department combo with names from DepartmentDAO
         try {
@@ -143,7 +158,7 @@ public class EquipmentPanel extends JPanel {
                 "Tên thiết bị:", tfName,
                 "Nhà sản xuất:", tfManu,
                 "Năm:", tfYear,
-                "Trang Thai (TOT/BAO_TRI/HU_HONG):", tfStatus,
+                "Trạng thái:", cbStatus,
                 "Đường dẫn ảnh (local path or URL):", tfImage,
                 "Khoa/Phòng:", cbDept
         };
@@ -157,7 +172,7 @@ public class EquipmentPanel extends JPanel {
             e.setManufacturer(tfManu.getText());
             e.setImagePath(tfImage.getText().isEmpty() ? null : tfImage.getText());
             e.setYearOfUse(tfYear.getText().isEmpty() ? null : Integer.parseInt(tfYear.getText()));
-            e.setStatus(tfStatus.getText());
+            e.setStatus((String) cbStatus.getSelectedItem());
             // map selected department name back to id
             String selDept = (String) cbDept.getSelectedItem();
             Integer deptId = null;
@@ -187,10 +202,46 @@ public class EquipmentPanel extends JPanel {
         }
     }
 
+    private void deleteEquipment() {
+        int row = table.getSelectedRow();
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn thiết bị cần xóa");
+            return;
+        }
+        
+        int id = (int) model.getValueAt(row, 0);
+        String equipmentName = (String) model.getValueAt(row, 2); // Get equipment name for confirmation
+        
+        int confirm = JOptionPane.showConfirmDialog(
+            this, 
+            "Bạn có chắc chắn muốn xóa thiết bị " + equipmentName + "?",
+            "Xác nhận xóa",
+            JOptionPane.YES_NO_OPTION
+        );
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                equipmentDAO.delete(id);
+                JOptionPane.showMessageDialog(this, "Đã xóa thiết bị thành công");
+                loadData(); // Refresh the table
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(
+                    this, 
+                    "Lỗi khi xóa thiết bị: " + ex.getMessage(),
+                    "Lỗi", 
+                    JOptionPane.ERROR_MESSAGE
+                );
+            }
+        }
+    }
+    
     private void editEquipment() {
         int row = table.getSelectedRow();
-        if (row < 0)
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn thiết bị cần sửa");
             return;
+        }
 
         int id = (int) model.getValueAt(row, 0);
 
@@ -201,9 +252,13 @@ public class EquipmentPanel extends JPanel {
             JTextField tfName = new JTextField(e.getName());
             JTextField tfManu = new JTextField(e.getManufacturer());
             JTextField tfYear = new JTextField(e.getYearOfUse() + "");
-            JTextField tfStatus = new JTextField(e.getStatus());
+            
+            // Create status combo box with options and select current status
+            JComboBox<String> cbStatus = new JComboBox<>(new String[]{"TOT", "BAO_TRI", "HU_HONG"});
+            cbStatus.setSelectedItem(e.getStatus());
+            
             JTextField tfImage = new JTextField(e.getImagePath() == null ? "" : e.getImagePath());
-            javax.swing.JComboBox<String> cbDept = new javax.swing.JComboBox<>();
+            JComboBox<String> cbDept = new JComboBox<>();
 
             // populate departments and preselect current
             try {
@@ -227,7 +282,7 @@ public class EquipmentPanel extends JPanel {
                     "Tên thiết bị:", tfName,
                     "Nhà sản xuất:", tfManu,
                     "Năm:", tfYear,
-                    "Trang Thai (TOT/BAO_TRI/HU_HONG):", tfStatus,
+                    "Trạng thái:", cbStatus,
                     "Đường dẫn ảnh (local path or URL):", tfImage,
                     "Khoa/Phòng:", cbDept
             };
@@ -240,7 +295,7 @@ public class EquipmentPanel extends JPanel {
                 e.setManufacturer(tfManu.getText());
                 e.setImagePath(tfImage.getText().isEmpty() ? null : tfImage.getText());
                 e.setYearOfUse(tfYear.getText().isEmpty() ? null : Integer.parseInt(tfYear.getText()));
-                e.setStatus(tfStatus.getText());
+                e.setStatus((String) cbStatus.getSelectedItem());
 
                 // map selected department name back to id
                 String selDept = (String) cbDept.getSelectedItem();

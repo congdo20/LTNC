@@ -282,52 +282,98 @@ public class MaintenanceDAO {
     }
 
     /**
-     * Mark a plan completed, update its status and notify the requester of the
-     * linked maintenance request.
+     * Mark a plan as pending approval, update its status and notify the equipment manager.
      */
-    public void markPlanCompleted(int planId) throws SQLException {
-        // 1) update plan status
+    public void markPlanPendingApproval(int planId) throws SQLException {
+        String upd = "UPDATE maintenance_plans SET status = 'CHO_NGHIEM_THU' WHERE id = ?";
+        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(upd)) {
+            p.setInt(1, planId);
+            p.executeUpdate();
+        }
+
+        // Find request_id for the plan
+        Integer requestId = getRequestIdForPlan(planId);
+        if (requestId == null) return;
+
+        // Find equipment manager (QL_THIET_BI) to notify
+        com.example.hospital.dao.UserDAO userDao = new com.example.hospital.dao.UserDAO();
+        List<com.example.hospital.models.User> qlThietBiUsers = userDao.findByRole(com.example.hospital.models.User.Role.QL_THIET_BI);
+        
+        // Notify all equipment managers
+        com.example.hospital.dao.NotificationDAO nd = new com.example.hospital.dao.NotificationDAO();
+        String message = "Yêu cầu bảo trì (ID=" + requestId + ") đang chờ nghiệm thu.";
+        for (com.example.hospital.models.User user : qlThietBiUsers) {
+            nd.createNotification(user.getId(), message, requestId);
+        }
+    }
+
+    /**
+     * Approve a completed maintenance plan, update its status and notify the department head.
+     */
+    public void approvePlan(int planId) throws SQLException {
+        // 1) update plan status to completed
         String upd = "UPDATE maintenance_plans SET status = 'HOAN_THANH' WHERE id = ?";
         try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(upd)) {
             p.setInt(1, planId);
             p.executeUpdate();
         }
 
-        // 2) find request_id for the plan
+        // 2) find request_id and department_id for the plan
         Integer requestId = null;
-        String q = "SELECT request_id FROM maintenance_plans WHERE id = ?";
+        Integer departmentId = null;
+        String q = "SELECT r.id, r.department_id FROM maintenance_requests r " +
+                  "JOIN maintenance_plans p ON r.id = p.request_id WHERE p.id = ?";
         try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(q)) {
             p.setInt(1, planId);
             try (ResultSet rs = p.executeQuery()) {
                 if (rs.next()) {
-                    int rid = rs.getInt(1);
-                    requestId = rs.wasNull() ? null : rid;
+                    requestId = rs.getInt(1);
+                    departmentId = rs.getInt(2);
+                    if (rs.wasNull()) departmentId = null;
                 }
             }
         }
 
-        if (requestId == null)
-            return; // nothing to notify
+        if (requestId == null || departmentId == null) return;
 
-        // 3) find requester id from maintenance_requests
-        Integer requesterId = null;
-        String q2 = "SELECT requester_id FROM maintenance_requests WHERE id = ?";
-        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(q2)) {
-            p.setInt(1, requestId);
+        // 3) find department head (TRUONG_KHOA) to notify
+        com.example.hospital.dao.UserDAO userDao = new com.example.hospital.dao.UserDAO();
+        List<com.example.hospital.models.User> truongKhoaUsers = userDao.findByDepartmentAndRole(
+            departmentId, 
+            com.example.hospital.models.User.Role.TRUONG_KHOA
+        );
+        
+        // 4) notify department head
+        com.example.hospital.dao.NotificationDAO nd = new com.example.hospital.dao.NotificationDAO();
+        String message = "Yêu cầu bảo trì (ID=" + requestId + ") đã được nghiệm thu và hoàn thành.";
+        for (com.example.hospital.models.User user : truongKhoaUsers) {
+            nd.createNotification(user.getId(), message, requestId);
+        }
+    }
+
+    /**
+     * Helper method to get request_id for a plan
+     */
+    private Integer getRequestIdForPlan(int planId) throws SQLException {
+        String q = "SELECT request_id FROM maintenance_plans WHERE id = ?";
+        try (Connection c = DBUtil.getConnection(); 
+             PreparedStatement p = c.prepareStatement(q)) {
+            p.setInt(1, planId);
             try (ResultSet rs = p.executeQuery()) {
                 if (rs.next()) {
-                    int uid = rs.getInt(1);
-                    requesterId = rs.wasNull() ? null : uid;
+                    int rid = rs.getInt(1);
+                    return rs.wasNull() ? null : rid;
                 }
             }
         }
+        return null;
+    }
 
-        if (requesterId == null)
-            return;
-
-        // 4) create notification
-        com.example.hospital.dao.NotificationDAO nd = new com.example.hospital.dao.NotificationDAO();
-        String message = "Yêu cầu bảo trì (ID=" + requestId + ") của bạn đã được hoàn thành.";
-        nd.createNotification(requesterId, message, requestId);
+    /**
+     * Mark a plan completed, update its status and notify the requester of the
+     * linked maintenance request.
+     */
+    public void markPlanCompleted(int planId) throws SQLException {
+        markPlanPendingApproval(planId);
     }
 }

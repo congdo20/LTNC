@@ -306,5 +306,13 @@ public class EquipmentDAO {
 
         return e;
     }
-
+    
+    public void delete(int id) throws SQLException {
+        String sql = "DELETE FROM equipment WHERE id = ?";
+        try (Connection c = DBUtil.getConnection();
+             PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, id);
+            p.executeUpdate();
+        }
+    }
 }
