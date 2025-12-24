@@ -11,3 +11,9 @@ nâng cấp giao diện
 
 phiếu yêu cầu bảo trì chưa có list chọn thiết bị, cập nhật sẵn ngày
 hiển thị tên thiết bị trong yêu cầu bảo trì thay vì id
+
+
+
+
+
+bổ sung tìm kiếm thiết bị, xuất báo cáo ngay cho thiết bị , thông báo trực tiếp tại yêu cầu
