@@ -16,4 +16,4 @@ hiển thị tên thiết bị trong yêu cầu bảo trì thay vì id
 
 
 
-bổ sung tìm kiếm thiết bị, xuất báo cáo ngay cho thiết bị , thông báo trực tiếp tại yêu cầu
+bổ sung tìm kiếm thiết bị, xuất báo cáo ngay cho thiết bị , thông báo trực tiếp tại yêu cầu, thêm chức năng thêm role, điều chỉnh quyền của role
