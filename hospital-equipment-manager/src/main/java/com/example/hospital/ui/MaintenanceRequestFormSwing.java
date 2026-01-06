@@ -699,6 +699,35 @@ public class MaintenanceRequestFormSwing extends JFrame {
         return cell;
     }
 
+    /**
+     * Pre-select the given equipment in the first equipment row (if any).
+     * Also sets default quantity to 1.
+     */
+    public void preselectEquipment(Integer equipmentId) {
+        if (equipmentId == null || allEquipment == null || equipmentRows.isEmpty())
+            return;
+        SwingUtilities.invokeLater(() -> {
+            String target = null;
+            for (Equipment eq : allEquipment) {
+                if (eq.getId() == equipmentId) {
+                    target = String.format("%s - %s", eq.getCode(), eq.getName());
+                    break;
+                }
+            }
+            if (target == null)
+                return;
+            JComponent[] row = equipmentRows.get(0);
+            if (row != null && row.length > 1 && row[1] instanceof JComboBox) {
+                @SuppressWarnings("unchecked")
+                JComboBox<String> cb = (JComboBox<String>) row[1];
+                cb.setSelectedItem(target);
+            }
+            if (row != null && row.length > 3 && row[3] instanceof JTextField) {
+                ((JTextField) row[3]).setText("1");
+            }
+        });
+    }
+
     private void saveRequests() {
         try {
             // Get the current date as LocalDateTime

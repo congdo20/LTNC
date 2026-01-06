@@ -154,3 +154,13 @@ CREATE TABLE IF NOT EXISTS notifications (
 ALTER TABLE maintenance_plans 
 MODIFY COLUMN status ENUM('CHO_THUC_HIEN', 'DANG_THUC_HIEN', 'CHO_NGHIEM_THU', 'HOAN_THANH') 
 DEFAULT 'CHO_THUC_HIEN';
+
+
+-- table to store per-user permissions (key-value)
+CREATE TABLE IF NOT EXISTS user_permissions (
+    user_id INT NOT NULL,
+    perm_key VARCHAR(100) NOT NULL,
+    allowed TINYINT(1) NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, perm_key),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
