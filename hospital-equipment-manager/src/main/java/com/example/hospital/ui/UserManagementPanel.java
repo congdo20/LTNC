@@ -2,22 +2,40 @@ package com.example.hospital.ui;
 
 import com.example.hospital.dao.UserDAO;
 import com.example.hospital.models.User;
+import com.example.hospital.models.Permission;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
+import javax.swing.RowFilter;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.regex.Pattern;
 
 public class UserManagementPanel extends JPanel {
 
     private final UserDAO userDAO = new UserDAO();
+    private MainFrame mainFrame; // ✅ Để gọi refreshTabs() khi permissions thay đổi
     private JTable table;
     private DefaultTableModel model;
+    private TableRowSorter<DefaultTableModel> sorter;
+    private JTextField tfUserSearch;
+    private JComboBox<String> cbUserSearchField;
 
-    public UserManagementPanel() {
+    public UserManagementPanel(MainFrame mainFrame) {
+        this.mainFrame = mainFrame; // ✅ Nhận MainFrame reference
         initUI();
         loadData();
+    }
+
+    // ✅ Constructor default cho backward compatibility
+    public UserManagementPanel() {
+        this(null);
     }
 
     private void initUI() {
@@ -35,6 +53,49 @@ public class UserManagementPanel extends JPanel {
         };
 
         table = new JTable(model);
+
+        // Setup sorter for search/filter
+        sorter = new TableRowSorter<>(model);
+        table.setRowSorter(sorter);
+
+        // Search UI
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchPanel.add(new JLabel("Tìm:"));
+        cbUserSearchField = new JComboBox<>(new String[] { "Tất cả", "Username", "Fullname", "Role", "Department" });
+        searchPanel.add(cbUserSearchField);
+        tfUserSearch = new JTextField(20);
+        searchPanel.add(tfUserSearch);
+        JButton btnClearSearch = new JButton("Xóa");
+        searchPanel.add(btnClearSearch);
+        add(searchPanel, BorderLayout.NORTH);
+
+        // Document listener for real-time search
+        tfUserSearch.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                applyFilter();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                applyFilter();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                applyFilter();
+            }
+        });
+
+        // Clear search button
+        btnClearSearch.addActionListener(e -> {
+            tfUserSearch.setText("");
+            sorter.setRowFilter(null);
+        });
+
+        // Combo box to apply filter when selection changes
+        cbUserSearchField.addActionListener(e -> applyFilter());
+
         add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel btns = new JPanel();
@@ -151,10 +212,42 @@ public class UserManagementPanel extends JPanel {
     }
 
     private void openDialog(User u) {
-        UserDialog d = new UserDialog(SwingUtilities.getWindowAncestor(this), u, userDAO);
+        UserDialog d = new UserDialog(SwingUtilities.getWindowAncestor(this), u, userDAO, mainFrame);
         d.setVisible(true);
         if (d.isSaved()) {
             loadData();
+            // ✅ Refresh tabs nếu permissions thay đổi
+            if (mainFrame != null) {
+                mainFrame.refreshTabs();
+            }
+        }
+    }
+
+    private void applyFilter() {
+        String txt = tfUserSearch.getText().trim();
+        if (txt.isEmpty()) {
+            sorter.setRowFilter(null);
+            return;
+        }
+        String rx = "(?i).*" + Pattern.quote(txt) + ".*";
+        int sel = cbUserSearchField.getSelectedIndex();
+        try {
+            if (sel == 0) { // Tất cả
+                sorter.setRowFilter(RowFilter.regexFilter(rx));
+            } else {
+                int colIdx = 1; // default Username
+                if (sel == 1)
+                    colIdx = 1; // Username
+                else if (sel == 2)
+                    colIdx = 2; // Fullname
+                else if (sel == 3)
+                    colIdx = 6; // Role
+                else if (sel == 4)
+                    colIdx = 7; // Department
+                sorter.setRowFilter(RowFilter.regexFilter(rx, colIdx));
+            }
+        } catch (java.util.regex.PatternSyntaxException ex) {
+            sorter.setRowFilter(null);
         }
     }
 
@@ -176,77 +269,100 @@ public class UserManagementPanel extends JPanel {
         private JTextField tfPhone = new JTextField(15);
         private JTextField tfEmail = new JTextField(20);
         private JComboBox<String> cbRole;
+        private Map<String, JCheckBox> permBoxes = new LinkedHashMap<>();
 
         private User user;
         private UserDAO dao;
+        private MainFrame mainFrame; // ✅ Để refresh tabs sau khi save
 
-        public UserDialog(Window owner, User u, UserDAO dao) {
+        public UserDialog(Window owner, User u, UserDAO dao, MainFrame mainFrame) {
             super(owner, "User", ModalityType.APPLICATION_MODAL);
             this.dao = dao;
             this.user = (u == null) ? new User() : u;
+            this.mainFrame = mainFrame; // ✅ Lưu reference
 
             initUI();
             fillData();
         }
 
         private void initUI() {
-            JPanel p = new JPanel(new GridLayout(11, 2, 6, 6));
+            JPanel p = new JPanel();
+            p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
             p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-            p.add(new JLabel("Username:"));
-            p.add(tfUser);
+            // Main user fields
+            JPanel mainPanel = new JPanel(new GridLayout(11, 2, 6, 6));
 
-            p.add(new JLabel("Password (để trống nếu không đổi):"));
-            p.add(pfPass);
+            mainPanel.add(new JLabel("Username:"));
+            mainPanel.add(tfUser);
 
-            p.add(new JLabel("Full name:"));
-            p.add(tfFull);
+            mainPanel.add(new JLabel("Password (để trống nếu không đổi):"));
+            mainPanel.add(pfPass);
 
-            p.add(new JLabel("DOB (YYYY-MM-DD):"));
-            p.add(tfDob);
+            mainPanel.add(new JLabel("Full name:"));
+            mainPanel.add(tfFull);
 
-            p.add(new JLabel("Gender:"));
-            p.add(tfGender);
+            mainPanel.add(new JLabel("DOB (YYYY-MM-DD):"));
+            mainPanel.add(tfDob);
 
-            p.add(new JLabel("Position:"));
-            p.add(tfPosition);
+            mainPanel.add(new JLabel("Gender:"));
+            mainPanel.add(tfGender);
 
-            p.add(new JLabel("Role:"));
-            // populate role combo with enum names
+            mainPanel.add(new JLabel("Position:"));
+            mainPanel.add(tfPosition);
+
+            mainPanel.add(new JLabel("Role:"));
             cbRole = new JComboBox<>();
             for (User.Role r : User.Role.values()) {
                 cbRole.addItem(r.name());
             }
-            p.add(cbRole);
+            mainPanel.add(cbRole);
 
-            p.add(new JLabel("Department (optional):"));
-            // populate department combo with id - name entries
+            mainPanel.add(new JLabel("Department (optional):"));
             try {
                 com.example.hospital.dao.DepartmentDAO depDao = new com.example.hospital.dao.DepartmentDAO();
                 java.util.Map<Integer, String> deps = depDao.findAll();
-                cbDept.addItem(""); // allow empty (no department)
+                cbDept.addItem("");
                 for (java.util.Map.Entry<Integer, String> en : deps.entrySet()) {
                     cbDept.addItem(en.getKey() + " - " + en.getValue());
                 }
             } catch (SQLException ex) {
-                // ignore; leave combo empty
+                // ignore
             }
-            p.add(cbDept);
+            mainPanel.add(cbDept);
 
-            p.add(new JLabel("Phone:"));
-            p.add(tfPhone);
+            mainPanel.add(new JLabel("Phone:"));
+            mainPanel.add(tfPhone);
 
-            p.add(new JLabel("Email:"));
-            p.add(tfEmail);
+            mainPanel.add(new JLabel("Email:"));
+            mainPanel.add(tfEmail);
 
+            p.add(mainPanel);
+
+            // Permissions panel
+            JPanel permPanel = new JPanel();
+            permPanel.setLayout(new BoxLayout(permPanel, BoxLayout.Y_AXIS));
+            permPanel.setBorder(BorderFactory.createTitledBorder("Quyền truy cập"));
+
+            for (String key : Permission.LABELS.keySet()) {
+                JCheckBox cb = new JCheckBox(Permission.LABELS.get(key));
+                permBoxes.put(key, cb);
+                permPanel.add(cb);
+            }
+
+            p.add(permPanel);
+
+            // Buttons
+            JPanel btnPanel = new JPanel(new FlowLayout());
             JButton btnSave = new JButton("Lưu");
             JButton btnCancel = new JButton("Hủy");
 
             btnSave.addActionListener(e -> save());
             btnCancel.addActionListener(e -> dispose());
 
-            p.add(btnSave);
-            p.add(btnCancel);
+            btnPanel.add(btnSave);
+            btnPanel.add(btnCancel);
+            p.add(btnPanel);
 
             setContentPane(p);
             pack();
@@ -261,7 +377,6 @@ public class UserManagementPanel extends JPanel {
             tfPosition.setText(user.getPosition() == null ? "" : user.getPosition());
             if (user.getRole() != null)
                 cbRole.setSelectedItem(user.getRole().name());
-            // select department in combo if present
             if (user.getDepartmentId() == null) {
                 cbDept.setSelectedIndex(0);
             } else {
@@ -276,6 +391,12 @@ public class UserManagementPanel extends JPanel {
             }
             tfPhone.setText(user.getPhone() == null ? "" : user.getPhone());
             tfEmail.setText(user.getEmail() == null ? "" : user.getEmail());
+
+            // Fill permissions
+            for (String key : permBoxes.keySet()) {
+                JCheckBox cb = permBoxes.get(key);
+                cb.setSelected(user.hasPermission(key));
+            }
         }
 
         private void save() {
@@ -308,7 +429,6 @@ public class UserManagementPanel extends JPanel {
                 if (deptText.isEmpty()) {
                     user.setDepartmentId(null);
                 } else {
-                    // deptText expected as "<id> - <name>"
                     String[] parts = deptText.split("\\s*-\\s*", 2);
                     try {
                         int depId = Integer.parseInt(parts[0]);
@@ -322,17 +442,25 @@ public class UserManagementPanel extends JPanel {
                 user.setPhone(phone.isEmpty() ? null : phone);
                 user.setEmail(email.isEmpty() ? null : email);
 
+                // Build permissions map from checkboxes
+                Map<String, Boolean> permsMap = new LinkedHashMap<>();
+                for (String key : permBoxes.keySet()) {
+                    JCheckBox cb = permBoxes.get(key);
+                    permsMap.put(key, cb.isSelected());
+                }
+                user.setPermissions(permsMap);
+
                 try {
                     if (user.getId() == 0) {
-                        // Creating new user requires a password
                         if (password.isEmpty()) {
                             JOptionPane.showMessageDialog(this, "Yêu cầu mật khẩu cho người dùng mới");
                             return;
                         }
                         dao.create(user, password);
                     } else {
-                        // Update; if password empty => no change (handled by DAO)
                         dao.update(user, password);
+                        // Update permissions after user update
+                        dao.setPermissions(user.getId(), user.getPermissions());
                     }
                     saved = true;
                     dispose();

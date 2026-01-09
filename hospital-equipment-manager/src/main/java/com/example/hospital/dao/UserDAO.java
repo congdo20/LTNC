@@ -5,14 +5,16 @@ import com.example.hospital.models.User;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class UserDAO {
 
     public void create(User user, String password) throws SQLException {
         String sql = "INSERT INTO users(username, password, fullname, dob, gender, position, role, department_id, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBUtil.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             int idx = 1;
             ps.setString(idx++, user.getUsername());
             ps.setString(idx++, password);
@@ -28,6 +30,15 @@ public class UserDAO {
             ps.setString(idx++, user.getPhone());
             ps.setString(idx++, user.getEmail());
             ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    int id = keys.getInt(1);
+                    user.setId(id);
+                }
+            }
+            if (user.getId() > 0) {
+                setPermissions(user.getId(), user.getPermissions());
+            }
         }
     }
 
@@ -95,6 +106,9 @@ public class UserDAO {
                 u.setPhone(rs.getString("phone"));
                 u.setEmail(rs.getString("email"));
 
+                // Load permissions
+                u.setPermissions(getPermissions(u.getId()));
+
                 list.add(u);
             }
 
@@ -125,6 +139,9 @@ public class UserDAO {
                     u.setDepartmentId(rs.wasNull() ? null : dep);
                     u.setPhone(rs.getString("phone"));
                     u.setEmail(rs.getString("email"));
+
+                    // Load permissions
+                    u.setPermissions(getPermissions(u.getId()));
 
                     return u;
                 }
@@ -160,58 +177,98 @@ public class UserDAO {
                     u.setPhone(rs.getString("phone"));
                     u.setEmail(rs.getString("email"));
 
+                    // Load permissions
+                    u.setPermissions(getPermissions(u.getId()));
+
                     return u;
                 }
             }
         }
         return null;
     }
-    
+
     // In UserDAO.java
 
-public List<User> findByRole(User.Role role) throws SQLException {
-    List<User> users = new ArrayList<>();
-    String sql = "SELECT * FROM users WHERE role = ?";
-    try (Connection c = DBUtil.getConnection();
-         PreparedStatement p = c.prepareStatement(sql)) {
-        p.setString(1, role.name());
-        try (ResultSet rs = p.executeQuery()) {
-            while (rs.next()) {
-                users.add(extractUser(rs));
+    public List<User> findByRole(User.Role role) throws SQLException {
+        List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM users WHERE role = ?";
+        try (Connection c = DBUtil.getConnection();
+                PreparedStatement p = c.prepareStatement(sql)) {
+            p.setString(1, role.name());
+            try (ResultSet rs = p.executeQuery()) {
+                while (rs.next()) {
+                    users.add(extractUser(rs));
+                }
             }
         }
+        return users;
     }
-    return users;
-}
 
-public List<User> findByDepartmentAndRole(Integer departmentId, User.Role role) throws SQLException {
-    List<User> users = new ArrayList<>();
-    String sql = "SELECT * FROM users WHERE department_id = ? AND role = ?";
-    try (Connection c = DBUtil.getConnection();
-         PreparedStatement p = c.prepareStatement(sql)) {
-        p.setInt(1, departmentId);
-        p.setString(2, role.name());
-        try (ResultSet rs = p.executeQuery()) {
-            while (rs.next()) {
-                users.add(extractUser(rs));
+    public List<User> findByDepartmentAndRole(Integer departmentId, User.Role role) throws SQLException {
+        List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM users WHERE department_id = ? AND role = ?";
+        try (Connection c = DBUtil.getConnection();
+                PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, departmentId);
+            p.setString(2, role.name());
+            try (ResultSet rs = p.executeQuery()) {
+                while (rs.next()) {
+                    users.add(extractUser(rs));
+                }
             }
         }
+        return users;
     }
-    return users;
-}
 
-private User extractUser(ResultSet rs) throws SQLException {
-    User user = new User();
-    user.setId(rs.getInt("id"));
-    user.setUsername(rs.getString("username"));
-    user.setFullname(rs.getString("fullname"));
-    user.setRole(User.Role.valueOf(rs.getString("role")));
-    user.setDepartmentId(rs.getInt("department_id"));
-    if (rs.wasNull()) {
-        user.setDepartmentId(null);
+    private User extractUser(ResultSet rs) throws SQLException {
+        User user = new User();
+        user.setId(rs.getInt("id"));
+        user.setUsername(rs.getString("username"));
+        user.setFullname(rs.getString("fullname"));
+        user.setRole(User.Role.valueOf(rs.getString("role")));
+        user.setDepartmentId(rs.getInt("department_id"));
+        if (rs.wasNull()) {
+            user.setDepartmentId(null);
+        }
+        // Set other fields as needed
+        return user;
     }
-    // Set other fields as needed
-    return user;
-}
+
+    public Map<String, Boolean> getPermissions(int userId) throws SQLException {
+        Map<String, Boolean> perms = new HashMap<>();
+        String sql = "SELECT perm_key, allowed FROM user_permissions WHERE user_id = ?";
+        try (Connection c = DBUtil.getConnection();
+                PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, userId);
+            try (ResultSet rs = p.executeQuery()) {
+                while (rs.next()) {
+                    perms.put(rs.getString("perm_key"), rs.getInt("allowed") == 1);
+                }
+            }
+        }
+        return perms;
+    }
+
+    public void setPermissions(int userId, Map<String, Boolean> perms) throws SQLException {
+        String del = "DELETE FROM user_permissions WHERE user_id = ?";
+        try (Connection c = DBUtil.getConnection();
+                PreparedStatement pd = c.prepareStatement(del)) {
+            pd.setInt(1, userId);
+            pd.executeUpdate();
+        }
+        if (perms == null || perms.isEmpty())
+            return;
+        String ins = "INSERT INTO user_permissions(user_id, perm_key, allowed) VALUES (?, ?, ?)";
+        try (Connection c = DBUtil.getConnection();
+                PreparedStatement pi = c.prepareStatement(ins)) {
+            for (Map.Entry<String, Boolean> e : perms.entrySet()) {
+                pi.setInt(1, userId);
+                pi.setString(2, e.getKey());
+                pi.setInt(3, e.getValue() ? 1 : 0);
+                pi.addBatch();
+            }
+            pi.executeBatch();
+        }
+    }
 
 }

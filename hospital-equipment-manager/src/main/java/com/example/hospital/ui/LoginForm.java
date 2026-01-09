@@ -36,21 +36,42 @@ public class LoginForm extends JFrame {
     }
 
     private void attemptLogin() {
-        String username = usernameField.getText();
-        String password = new String(passwordField.getPassword());
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword()).trim();
+
+        if (username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu",
+                    "Thông báo",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         try {
+            System.out.println("[LOGIN] Attempting login for user: " + username);
             User user = userDAO.login(username, password);
+
             if (user != null) {
+                System.out.println("[LOGIN] SUCCESS: User '" + username + "' logged in. Role: " + user.getRole());
                 // Open main screen directly on successful login
                 MainFrame mainFrame = new MainFrame(user);
                 mainFrame.setVisible(true);
                 dispose();
             } else {
-                JOptionPane.showMessageDialog(this, "Sai tên đăng nhập hoặc mật khẩu.", "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
+                System.out.println("[LOGIN] FAILED: Invalid credentials for user '" + username + "'");
+                JOptionPane.showMessageDialog(this,
+                        "Tên đăng nhập hoặc mật khẩu không đúng.\n\nVui lòng kiểm tra lại thông tin.",
+                        "Đăng nhập thất bại",
+                        JOptionPane.WARNING_MESSAGE);
+                passwordField.setText("");
+                usernameField.requestFocus();
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi kết nối CSDL: " + ex.getMessage(), "Lỗi",
+            System.err.println("[LOGIN] DATABASE ERROR: " + ex.getMessage());
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi kết nối cơ sở dữ liệu:\n" + ex.getMessage(),
+                    "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
         }
     }

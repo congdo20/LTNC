@@ -104,11 +104,6 @@
 //     }
 // }
 
-
-
-
-
-
 // package com.example.hospital.ui.panels;
 
 // import javax.swing.*;
@@ -298,10 +293,6 @@
 //     }
 // }
 
-
-
-
-
 package com.example.hospital.ui.panels;
 
 import javax.swing.*;
@@ -453,7 +444,14 @@ public class DeptEquipPanel extends JPanel {
 
     private void loadData(User user) {
         try {
-            List<Equipment> list = dao.findByDepartment(user.getDepartmentId());
+            List<Equipment> list;
+            if (user.getDepartmentId() == null) {
+                // Admin or users without department: show all equipment
+                list = dao.findAll();
+            } else {
+                // Regular department head: show only department equipment
+                list = dao.findByDepartment(user.getDepartmentId());
+            }
 
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             model.setRowCount(0);

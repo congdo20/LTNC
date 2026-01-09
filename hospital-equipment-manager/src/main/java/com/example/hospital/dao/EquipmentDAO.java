@@ -142,9 +142,12 @@ public class EquipmentDAO {
         return null;
     }
 
-
     public List<Equipment> findByDepartment(Integer deptId) throws SQLException {
         List<Equipment> list = new ArrayList<>();
+        // Handle null deptId: return empty list instead of crashing
+        if (deptId == null) {
+            return list;
+        }
         String sql = "SELECT * FROM equipment WHERE department_id = ?";
         try (Connection c = DBUtil.getConnection();
                 PreparedStatement p = c.prepareStatement(sql)) {
@@ -175,11 +178,11 @@ public class EquipmentDAO {
 
         return e;
     }
-    
+
     public void delete(int id) throws SQLException {
         String sql = "DELETE FROM equipment WHERE id = ?";
         try (Connection c = DBUtil.getConnection();
-             PreparedStatement p = c.prepareStatement(sql)) {
+                PreparedStatement p = c.prepareStatement(sql)) {
             p.setInt(1, id);
             p.executeUpdate();
         }

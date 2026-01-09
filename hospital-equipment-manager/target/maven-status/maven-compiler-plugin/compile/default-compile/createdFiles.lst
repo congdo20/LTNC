@@ -3,6 +3,7 @@ com\example\hospital\ui\RequestDialog.class
 com\example\hospital\dao\DepartmentDAO.class
 com\example\hospital\ui\MaintenancePanel$1.class
 com\example\hospital\models\MaintenanceRequest.class
+com\example\hospital\ui\UserManagementPanel$3.class
 com\example\hospital\ui\panels\TaskPanel$1.class
 com\example\hospital\db\DBUtil.class
 com\example\hospital\MainApp.class
@@ -36,8 +37,10 @@ com\example\hospital\models\User$Role.class
 com\example\hospital\ui\MaintenanceRequestFormSwing.class
 com\example\hospital\ui\panels\ReportPanel.class
 com\example\hospital\dao\TxDAO.class
+com\example\hospital\ui\EquipmentPanel$2.class
 com\example\hospital\util\UIUtil.class
 com\example\hospital\ui\MaintenancePanel$2.class
+com\example\hospital\models\Permission.class
 com\example\hospital\ui\UserManagementPanel$1.class
 com\example\hospital\ui\EquipmentPanel.class
 com\example\hospital\ui\InspectionPanel.class
@@ -49,6 +52,7 @@ com\example\hospital\dao\UserDAO.class
 com\example\hospital\ui\panels\NotificationsPanel.class
 com\example\hospital\App.class
 com\example\hospital\ui\MaintenancePanel.class
+com\example\hospital\ui\panels\DeptEquipPanel$1.class
 com\example\hospital\ui\LoginFrame$2.class
 com\example\hospital\ui\panels\TaskPanel.class
 com\example\hospital\DbTest.class

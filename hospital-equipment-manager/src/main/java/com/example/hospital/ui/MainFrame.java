@@ -1,86 +1,16 @@
-// package com.example.hospital.ui;
-
-// import javax.swing.*;
-
-// import com.example.hospital.models.User;
-// import com.example.hospital.ui.panels.DeptEquipPanel;
-// import com.example.hospital.ui.panels.PlanPanel;
-// import com.example.hospital.ui.panels.RequestPanel;
-// import com.example.hospital.ui.panels.AssignPanel;
-// import com.example.hospital.ui.panels.TaskPanel;
-// import com.example.hospital.ui.panels.ReportPanel;
-
-// import java.awt.*;
-
-// public class MainFrame extends JFrame {
-//     private User currentUser;
-//         private CardLayout card;
-//     private JPanel mainPanel;
-
-//     public MainFrame(User user) {
-//         this.currentUser = user;
-//         setTitle("Hospital Equipment Manager");
-//         setSize(1000, 650);
-//         setDefaultCloseOperation(EXIT_ON_CLOSE);
-//         setLocationRelativeTo(null);
-
-//         showUserInfo(user);
-
-//         JTabbedPane tabs = new JTabbedPane();
-
-//         if (user.isAdmin()) {
-//             tabs.addTab("Quản lý tài khoản", new UserManagementPanel());
-//         }
-
-//         if (user.isTruongKhoa()) {
-//             tabs.addTab("Thiết bị khoa/viện", new DeptEquipPanel());
-//             tabs.addTab("Yêu cầu bảo trì", new RequestPanel());
-//         }
-
-//         if (user.isQLThietBi()) {
-//             tabs.addTab("Thiết bị", new EquipmentPanel());
-//             tabs.addTab("Yêu cầu bảo trì", new RequestPanel());
-//             tabs.addTab("Lên kế hoạch", new PlanPanel());
-//             tabs.addTab("Phân công", new AssignPanel());
-//         }
-
-//         if (user.isNvBaoTri()) {
-//             tabs.addTab("Nhiệm vụ", new TaskPanel());
-//             // tabs.addTab("Báo cáo", new ReportPanel());
-//             tabs.addTab("Báo cáo", new ReportPanel(currentUser));
-
-//         }
-
-//         add(tabs, BorderLayout.CENTER);
-//     }
-
-//     private void showUserInfo(User user) {
-//         JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-//         JLabel lblUser = new JLabel(
-//                 "Người dùng: " + user.getFullname()
-//                         + "  |  Chức vụ: " + user.getRole());
-//         userPanel.add(lblUser);
-//         add(userPanel, BorderLayout.NORTH);
-//     }
-
-//     private void doLogout() {
-//         dispose(); // đóng main
-//         new LoginFrame().setVisible(true); // quay lại login
-//     }
-
-// }
-
 package com.example.hospital.ui;
 
 import javax.swing.*;
 
 import com.example.hospital.models.User;
+import com.example.hospital.models.Permission;
 import com.example.hospital.ui.panels.*;
 
 import java.awt.*;
 
 public class MainFrame extends JFrame {
     private User currentUser;
+    private JTabbedPane tabs;
 
     public MainFrame(User user) {
         this.currentUser = user;
@@ -90,31 +20,66 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        buildHeader(); // ✅ header chứa logout
+        buildHeader();
 
-        JTabbedPane tabs = new JTabbedPane();
+        tabs = new JTabbedPane();
+        refreshTabs();
 
-        if (user.isAdmin()) {
-            tabs.addTab("Quản lý tài khoản", new UserManagementPanel());
+        add(tabs, BorderLayout.CENTER);
+    }
+
+    /**
+     * Refresh tabs based on current user permissions
+     * Called when permissions change or app starts
+     */
+    public void refreshTabs() {
+        tabs.removeAll(); // Xóa tất cả tabs cũ
+
+        // Quản lý tài khoản (ADMIN only or with permission)
+        if (currentUser.isAdmin() || currentUser.hasPermission(Permission.MANAGE_ACCOUNTS)) {
+            tabs.addTab("Quản lý tài khoản", new UserManagementPanel(this));
         }
 
-        if (user.isTruongKhoa()) {
+        // Thiết bị khoa/viện (TRUONG_KHOA or permission)
+        if (currentUser.isAdmin() || currentUser.isTruongKhoa()
+                || currentUser.hasPermission(Permission.VIEW_DEPT_EQUIPMENT)) {
             tabs.addTab("Thiết bị khoa/viện", new DeptEquipPanel(currentUser));
+        }
+
+        // Thiết bị (QL_THIET_BI or permission)
+        if (currentUser.isAdmin() || currentUser.isQLThietBi()
+                || currentUser.hasPermission(Permission.VIEW_EQUIPMENT)) {
+            tabs.addTab("Thiết bị", new EquipmentPanel(currentUser));
+        }
+
+        // Yêu cầu bảo trì (TRUONG_KHOA, QL_THIET_BI or permission)
+        if (currentUser.isAdmin() || currentUser.isTruongKhoa() || currentUser.isQLThietBi()
+                || currentUser.hasPermission(Permission.CREATE_REQUEST)) {
             tabs.addTab("Yêu cầu bảo trì", new RequestPanel(currentUser));
         }
 
-        if (user.isQLThietBi()) {
-            tabs.addTab("Thiết bị", new EquipmentPanel(currentUser));
-            tabs.addTab("Yêu cầu bảo trì", new RequestPanel(currentUser));
+        // Lên kế hoạch (QL_THIET_BI or permission)
+        if (currentUser.isAdmin() || currentUser.isQLThietBi() || currentUser.hasPermission(Permission.PLAN)) {
+            // tabs.addTab("Lên kế hoạch", new PlanPanel());
+        }
+
+        // Phân công (QL_THIET_BI or permission)
+        if (currentUser.isAdmin() || currentUser.isQLThietBi() || currentUser.hasPermission(Permission.ASSIGN)) {
             tabs.addTab("Phân công", new AssignPanel());
         }
 
-        if (user.isNvBaoTri()) {
+        // Nhiệm vụ (NV_BAO_TRI or permission)
+        if (currentUser.isAdmin() || currentUser.isNvBaoTri() || currentUser.hasPermission(Permission.TASK)) {
             tabs.addTab("Nhiệm vụ", new TaskPanel(currentUser));
+        }
+
+        // Báo cáo (NV_BAO_TRI or permission)
+        if (currentUser.isAdmin() || currentUser.isNvBaoTri() || currentUser.hasPermission(Permission.REPORT)) {
             tabs.addTab("Báo cáo", new ReportPanel(currentUser));
         }
 
-        add(tabs, BorderLayout.CENTER);
+        tabs.revalidate();
+        tabs.repaint();
     }
 
     private void buildHeader() {
@@ -163,13 +128,6 @@ public class MainFrame extends JFrame {
         dlg.setSize(600, 400);
         dlg.setLocationRelativeTo(this);
         dlg.setVisible(true);
-        // after closing, update header count
-        // find the notifications button and update it
-        // quick approach: rebuild header
-        getContentPane().remove(0);
-        buildHeader();
-        revalidate();
-        repaint();
     }
 
     private void doLogout() {

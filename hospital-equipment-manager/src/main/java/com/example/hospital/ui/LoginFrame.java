@@ -146,24 +146,43 @@ public class LoginFrame extends JFrame {
             @Override
             protected User doInBackground() throws Exception {
                 try {
+                    System.out.println("[LOGIN] Attempting login for user: " + username);
                     UserDAO userDAO = new UserDAO();
-                    return userDAO.login(username, password);
+                    User user = userDAO.login(username, password);
+
+                    if (user != null) {
+                        System.out
+                                .println("[LOGIN] SUCCESS: User '" + username + "' logged in. Role: " + user.getRole());
+                    } else {
+                        System.out.println("[LOGIN] FAILED: Invalid credentials for user '" + username + "'");
+                    }
+
+                    return user;
                 } catch (SQLException ex) {
-                    throw new SQLException("Lỗi kết nối cơ sở dữ liệu: " + ex.getMessage());
+                    System.err.println("[LOGIN] DATABASE ERROR: " + ex.getMessage());
+                    ex.printStackTrace();
+                    throw new SQLException("Lỗi kết nối cơ sở dữ liệu: " + ex.getMessage(), ex);
+                } catch (Exception ex) {
+                    System.err.println("[LOGIN] UNEXPECTED ERROR: " + ex.getMessage());
+                    ex.printStackTrace();
+                    throw ex;
                 }
             }
 
             @Override
             protected void done() {
+                setCursor(Cursor.getDefaultCursor());
+                btnLogin.setEnabled(true);
+
                 try {
                     User user = get(); // This will throw any exceptions from doInBackground
 
                     if (user == null) {
                         // Invalid credentials
-                        setCursor(Cursor.getDefaultCursor());
-                        btnLogin.setEnabled(true);
+                        System.out.println("[LOGIN] Showing invalid credentials message");
                         JOptionPane.showMessageDialog(LoginFrame.this,
-                                "Tên đăng nhập hoặc mật khẩu không đúng.",
+                                "Tên đăng nhập hoặc mật khẩu không đúng.\n\n" +
+                                        "Vui lòng kiểm tra lại thông tin đăng nhập.",
                                 "Đăng nhập thất bại",
                                 JOptionPane.WARNING_MESSAGE);
                         pfPass.setText("");
@@ -172,6 +191,7 @@ public class LoginFrame extends JFrame {
                     }
 
                     // Login successful
+                    System.out.println("[LOGIN] Opening main application for user: " + user.getUsername());
                     SwingUtilities.invokeLater(() -> {
                         MainFrame mainFrame = new MainFrame(user);
                         mainFrame.setLocationRelativeTo(null);
@@ -179,16 +199,17 @@ public class LoginFrame extends JFrame {
                         dispose(); // Close login window
                     });
 
-                } catch (Exception ex) {
-                    // Login failed
-                    setCursor(Cursor.getDefaultCursor());
-                    btnLogin.setEnabled(true);
+                } catch (java.util.concurrent.ExecutionException ex) {
+                    // Handle execution exceptions
+                    Throwable cause = ex.getCause();
+                    String errorMessage = "Lỗi đăng nhập: ";
 
-                    String errorMessage = "Đăng nhập thất bại. ";
-                    if (ex.getCause() != null) {
-                        errorMessage += ex.getCause().getMessage();
+                    if (cause instanceof SQLException) {
+                        errorMessage = "Lỗi kết nối cơ sở dữ liệu:\n" + cause.getMessage();
+                        System.err.println("[LOGIN] Database connection error: " + cause.getMessage());
                     } else {
-                        errorMessage += ex.getMessage();
+                        errorMessage += cause != null ? cause.getMessage() : ex.getMessage();
+                        System.err.println("[LOGIN] Execution error: " + errorMessage);
                     }
 
                     JOptionPane.showMessageDialog(
@@ -197,7 +218,21 @@ public class LoginFrame extends JFrame {
                             "Lỗi đăng nhập",
                             JOptionPane.ERROR_MESSAGE);
 
-                    // Clear password field and focus back to username
+                    pfPass.setText("");
+                    tfUser.requestFocus();
+
+                } catch (Exception ex) {
+                    // Handle unexpected exceptions
+                    String errorMessage = "Lỗi không xác định: " + ex.getMessage();
+                    System.err.println("[LOGIN] Unexpected error: " + errorMessage);
+                    ex.printStackTrace();
+
+                    JOptionPane.showMessageDialog(
+                            LoginFrame.this,
+                            errorMessage,
+                            "Lỗi đăng nhập",
+                            JOptionPane.ERROR_MESSAGE);
+
                     pfPass.setText("");
                     tfUser.requestFocus();
                 }

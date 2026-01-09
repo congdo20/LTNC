@@ -111,24 +111,22 @@ CREATE TABLE maintenance_reports (
     FOREIGN KEY (generated_by) REFERENCES users(id)
 );
 
--- sample data
-INSERT INTO departments (name) VALUES ('Khoa Nội'), ('Khoa Ngoại'), ('Hồi sức cấp cứu'), ('Phòng Vật tư - Thiết bị y tế');
+-- Sample data for testing
+INSERT INTO departments (name, description) VALUES 
+('Khoa Nội', 'Khoa Nội - Chuyên khám chữa bệnh nội khoa'),
+('Khoa Ngoại', 'Khoa Ngoại - Chuyên khám chữa bệnh ngoại khoa'),
+('Hồi sức cấp cứu', 'Phòng Hồi sức - Chăm sóc bệnh nhân cấp cứu'),
+('Phòng Vật tư - Thiết bị y tế', 'Bộ phận quản lý thiết bị y tế');
 
--- create admin user with password 'admin123' hashed in app OR for quick test you can insert plain (but in app we hash)
--- INSERT INTO users(username, password, fullname, position, role, department_id)
--- VALUES ('admin', 'admin123', 'Quản trị hệ thống', 'Admin', 'ADMIN', 4);
-
-INSERT INTO users(username, password, fullname, dob, gender, position, role, department_id, phone, email)
-VALUES
-('admin', '1', 'Nguyễn Công Trình Độ', '2002-01-20', 'NAM', 'Admin hệ thống', 'ADMIN', NULL, '0900000000', 'admin@hospital.vn'),
-
+-- Test users: All with password '1' for quick testing
+-- In production, passwords must be hashed!
+INSERT INTO users (username, password, fullname, dob, gender, position, role, department_id, phone, email) VALUES
+('admin', '1', 'Nguyễn Công Trình Độ', '2002-01-20', 'NAM', 'Quản trị hệ thống', 'ADMIN', NULL, '0900000000', 'admin@hospital.vn'),
 ('truongnoi', '1', 'Trần Văn A', '1980-05-12', 'NAM', 'Trưởng khoa Nội', 'TRUONG_KHOA', 1, '0912345678', 'tva@hospital.vn'),
-
-('qltb', '1', 'Nguyễn Văn B', '1985-03-15', 'NAM', 'Tổ trưởng Quản lý thiết bị', 'QL_THIET_BI', 4, '0933555111', 'qltb@hospital.vn'),
-
-('kthuat1', '1', 'Nguyễn Thị C', '1995-11-20', 'NU', 'Kỹ thuật viên', 'NV_BAO_TRI', 4, '0988666333', '0988666333');
-
--- update users set fullname='Nguyễn Công Trình Độ' where username='admin' ;
+('truongngoai', '1', 'Lê Thị B', '1982-07-08', 'NU', 'Trưởng khoa Ngoại', 'TRUONG_KHOA', 2, '0913456789', 'ltb@hospital.vn'),
+('qltb', '1', 'Nguyễn Văn C', '1985-03-15', 'NAM', 'Tổ trưởng Quản lý thiết bị', 'QL_THIET_BI', 4, '0933555111', 'qltb@hospital.vn'),
+('kthuat1', '1', 'Nguyễn Thị D', '1995-11-20', 'NU', 'Kỹ thuật viên', 'NV_BAO_TRI', 4, '0988666333', 'ktd@hospital.vn'),
+('kthuat2', '1', 'Phạm Văn E', '1994-06-10', 'NAM', 'Kỹ thuật viên', 'NV_BAO_TRI', 4, '0989777444', 'kte@hospital.vn');
 
 
 ALTER TABLE equipment

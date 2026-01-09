@@ -144,10 +144,12 @@ public class RequestPanel extends JPanel {
         try {
             List<MaintenanceRequest> list;
 
-            if (currentUser.isQLThietBi()) {
-                list = dao.findAll(); // ✅ xem tất cả
-            } else {
+            if (currentUser.isAdmin() || currentUser.isQLThietBi()) {
+                list = dao.findAll(); // ✅ xem tất cả - Admin và QL thiết bị xem toàn bộ
+            } else if (currentUser.getDepartmentId() != null) {
                 list = dao.findByDepartment(currentUser.getDepartmentId());
+            } else {
+                list = dao.findAll(); // Fallback: xem tất cả nếu không có phòng ban
             }
 
             this.currentRequests = list;

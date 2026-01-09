@@ -1,0 +1,2 @@
+Error: Could not find or load main class com.example.hospital.MainApp
+Caused by: java.lang.ClassNotFoundException: com.example.hospital.MainApp

@@ -1,5 +1,8 @@
 package com.example.hospital.models;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class User {
     private int id;
     private String username;
@@ -15,6 +18,25 @@ public class User {
 
     public enum Role {
         ADMIN, TRUONG_KHOA, QL_THIET_BI, NV_BAO_TRI
+    }
+
+    private Map<String, Boolean> permissions = new HashMap<>();
+
+    public Map<String, Boolean> getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(Map<String, Boolean> perms) {
+        this.permissions = perms == null ? new HashMap<>() : new HashMap<>(perms);
+    }
+
+    public boolean hasPermission(String key) {
+        Boolean v = permissions.get(key);
+        return v != null && v.booleanValue();
+    }
+
+    public void setPermission(String key, boolean allowed) {
+        permissions.put(key, allowed);
     }
 
     public User() {
