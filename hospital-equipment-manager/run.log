@@ -1,0 +1,26 @@
+[LOGIN] Attempting login for user: admin
+[LOGIN] SUCCESS: User 'admin' logged in. Role: ADMIN
+[LOGIN] Opening main application for user: admin
+[TABS] Refreshed. Total tabs: 7
+[DIALOG] Opening dialog for user: admin
+[DIALOG] Dialog saved!
+[PERMISSIONS] Reloaded for user: admin
+[PERMISSIONS] Fresh permissions: {manage_accounts=true, view_equipment=true, task=false, report=false, view_dept_equipment=true, create_request=false, plan=false, assign=false}
+[DIALOG] Calling refreshTabs()
+[TABS] Refreshed. Total tabs: 7
+[LOGIN] Attempting login for user: admin
+[LOGIN] SUCCESS: User 'admin' logged in. Role: ADMIN
+[LOGIN] Opening main application for user: admin
+[TABS] Refreshed. Total tabs: 7
+[LOGIN] Attempting login for user: qltb
+[LOGIN] SUCCESS: User 'qltb' logged in. Role: QL_THIET_BI
+[LOGIN] Opening main application for user: qltb
+[TABS] Refreshed. Total tabs: 3
+[LOGIN] Attempting login for user: truongnoi
+[LOGIN] SUCCESS: User 'truongnoi' logged in. Role: TRUONG_KHOA
+[LOGIN] Opening main application for user: truongnoi
+[TABS] Refreshed. Total tabs: 2
+[LOGIN] Attempting login for user: admin
+[LOGIN] SUCCESS: User 'admin' logged in. Role: ADMIN
+[LOGIN] Opening main application for user: admin
+[TABS] Refreshed. Total tabs: 7

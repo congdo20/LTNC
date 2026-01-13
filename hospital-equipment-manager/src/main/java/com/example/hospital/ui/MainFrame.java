@@ -32,52 +32,71 @@ public class MainFrame extends JFrame {
      * Refresh tabs based on current user permissions
      * Called when permissions change or app starts
      */
+    public static java.util.List<String> computeTabsFor(User user) {
+        java.util.List<String> titles = new java.util.ArrayList<>();
+        if (user == null)
+            return titles;
+
+        if (user.isAdmin() || user.hasPermission(Permission.MANAGE_ACCOUNTS)) {
+            titles.add("Quản lý tài khoản");
+        }
+        if (user.isAdmin() || user.isTruongKhoa() || user.hasPermission(Permission.VIEW_DEPT_EQUIPMENT)) {
+            titles.add("Thiết bị khoa/viện");
+        }
+        if (user.isAdmin() || user.isQLThietBi() || user.hasPermission(Permission.VIEW_EQUIPMENT)) {
+            titles.add("Thiết bị");
+        }
+        if (user.isAdmin() || user.isTruongKhoa() || user.isQLThietBi()
+                || user.hasPermission(Permission.CREATE_REQUEST)) {
+            titles.add("Yêu cầu bảo trì");
+        }
+        if (user.isAdmin() || user.isQLThietBi() || user.hasPermission(Permission.PLAN)) {
+            // titles.add("Lên kế hoạch");
+        }
+        if (user.isAdmin() || user.isQLThietBi() || user.hasPermission(Permission.ASSIGN)) {
+            titles.add("Phân công");
+        }
+        if (user.isAdmin() || user.isNvBaoTri() || user.hasPermission(Permission.TASK)) {
+            titles.add("Nhiệm vụ");
+        }
+        if (user.isAdmin() || user.isNvBaoTri() || user.hasPermission(Permission.REPORT)) {
+            titles.add("Báo cáo");
+        }
+        return titles;
+    }
+
     public void refreshTabs() {
-        tabs.removeAll(); // Xóa tất cả tabs cũ
-
-        // Quản lý tài khoản (ADMIN only or with permission)
-        if (currentUser.isAdmin() || currentUser.hasPermission(Permission.MANAGE_ACCOUNTS)) {
-            tabs.addTab("Quản lý tài khoản", new UserManagementPanel(this));
+        // Rebuild tabs based on computed titles
+        tabs.removeAll();
+        java.util.List<String> titles = computeTabsFor(currentUser);
+        for (String t : titles) {
+            switch (t) {
+                case "Quản lý tài khoản":
+                    tabs.addTab(t, new UserManagementPanel(this));
+                    break;
+                case "Thiết bị khoa/viện":
+                    tabs.addTab(t, new DeptEquipPanel(currentUser));
+                    break;
+                case "Thiết bị":
+                    tabs.addTab(t, new EquipmentPanel(currentUser));
+                    break;
+                case "Yêu cầu bảo trì":
+                    tabs.addTab(t, new RequestPanel(currentUser));
+                    break;
+                case "Phân công":
+                    tabs.addTab(t, new AssignPanel());
+                    break;
+                case "Nhiệm vụ":
+                    tabs.addTab(t, new TaskPanel(currentUser));
+                    break;
+                case "Báo cáo":
+                    tabs.addTab(t, new ReportPanel(currentUser));
+                    break;
+                default:
+                    // ignore
+            }
         }
-
-        // Thiết bị khoa/viện (TRUONG_KHOA or permission)
-        if (currentUser.isAdmin() || currentUser.isTruongKhoa()
-                || currentUser.hasPermission(Permission.VIEW_DEPT_EQUIPMENT)) {
-            tabs.addTab("Thiết bị khoa/viện", new DeptEquipPanel(currentUser));
-        }
-
-        // Thiết bị (QL_THIET_BI or permission)
-        if (currentUser.isAdmin() || currentUser.isQLThietBi()
-                || currentUser.hasPermission(Permission.VIEW_EQUIPMENT)) {
-            tabs.addTab("Thiết bị", new EquipmentPanel(currentUser));
-        }
-
-        // Yêu cầu bảo trì (TRUONG_KHOA, QL_THIET_BI or permission)
-        if (currentUser.isAdmin() || currentUser.isTruongKhoa() || currentUser.isQLThietBi()
-                || currentUser.hasPermission(Permission.CREATE_REQUEST)) {
-            tabs.addTab("Yêu cầu bảo trì", new RequestPanel(currentUser));
-        }
-
-        // Lên kế hoạch (QL_THIET_BI or permission)
-        if (currentUser.isAdmin() || currentUser.isQLThietBi() || currentUser.hasPermission(Permission.PLAN)) {
-            // tabs.addTab("Lên kế hoạch", new PlanPanel());
-        }
-
-        // Phân công (QL_THIET_BI or permission)
-        if (currentUser.isAdmin() || currentUser.isQLThietBi() || currentUser.hasPermission(Permission.ASSIGN)) {
-            tabs.addTab("Phân công", new AssignPanel());
-        }
-
-        // Nhiệm vụ (NV_BAO_TRI or permission)
-        if (currentUser.isAdmin() || currentUser.isNvBaoTri() || currentUser.hasPermission(Permission.TASK)) {
-            tabs.addTab("Nhiệm vụ", new TaskPanel(currentUser));
-        }
-
-        // Báo cáo (NV_BAO_TRI or permission)
-        if (currentUser.isAdmin() || currentUser.isNvBaoTri() || currentUser.hasPermission(Permission.REPORT)) {
-            tabs.addTab("Báo cáo", new ReportPanel(currentUser));
-        }
-
+        System.out.println("[TABS] Refreshed. Total tabs: " + tabs.getTabCount());
         tabs.revalidate();
         tabs.repaint();
     }
@@ -117,6 +136,11 @@ public class MainFrame extends JFrame {
         } catch (Exception ex) {
             // ignore
         }
+    }
+
+    // ✅ Getter để UserManagementPanel có thể truy cập và update permissions
+    public User getCurrentUser() {
+        return currentUser;
     }
 
     private void showNotifications() {

@@ -212,14 +212,35 @@ public class UserManagementPanel extends JPanel {
     }
 
     private void openDialog(User u) {
+        System.out.println("[DIALOG] Opening dialog for user: " + (u == null ? "NEW" : u.getUsername()));
         UserDialog d = new UserDialog(SwingUtilities.getWindowAncestor(this), u, userDAO, mainFrame);
         d.setVisible(true);
+
         if (d.isSaved()) {
+            System.out.println("[DIALOG] Dialog saved!");
             loadData();
+
+            // ✅ Nếu edit chính mình, reload permissions từ database
+            if (mainFrame != null && u != null && u.getId() == mainFrame.getCurrentUser().getId()) {
+                try {
+                    // Reload permissions của current user từ database
+                    Map<String, Boolean> freshPerms = userDAO.getPermissions(u.getId());
+                    mainFrame.getCurrentUser().setPermissions(freshPerms);
+                    System.out.println("[PERMISSIONS] Reloaded for user: " + u.getUsername());
+                    System.out.println("[PERMISSIONS] Fresh permissions: " + freshPerms);
+                } catch (Exception ex) {
+                    System.err.println("[PERMISSIONS] Error reloading: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+            }
+
             // ✅ Refresh tabs nếu permissions thay đổi
             if (mainFrame != null) {
+                System.out.println("[DIALOG] Calling refreshTabs()");
                 mainFrame.refreshTabs();
             }
+        } else {
+            System.out.println("[DIALOG] Dialog cancelled");
         }
     }
 
