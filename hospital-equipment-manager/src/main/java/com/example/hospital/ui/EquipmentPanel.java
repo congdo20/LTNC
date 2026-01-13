@@ -83,12 +83,12 @@
 //         JPanel panel = new JPanel();
 //         panel.add(btnAdd);
 //         panel.add(btnEdit);
-        
+
 //         // Only show delete button for QL_THIET_BI role
 //         if (currentUser != null && currentUser.isQLThietBi()) {
 //             panel.add(btnDelete);
 //         }
-        
+
 //         panel.add(btnRefresh);
 //         add(panel, BorderLayout.SOUTH);
 
@@ -133,11 +133,11 @@
 //         JTextField tfName = new JTextField();
 //         JTextField tfManu = new JTextField();
 //         JTextField tfYear = new JTextField();
-        
+
 //         // Create status combo box with options
 //         JComboBox<String> cbStatus = new JComboBox<>(new String[]{"TOT", "BAO_TRI", "HU_HONG"});
 //         cbStatus.setSelectedItem("TOT");
-        
+
 //         JTextField tfImage = new JTextField();
 //         JComboBox<String> cbDept = new JComboBox<>();
 
@@ -208,17 +208,17 @@
 //             JOptionPane.showMessageDialog(this, "Vui lòng chọn thiết bị cần xóa");
 //             return;
 //         }
-        
+
 //         int id = (int) model.getValueAt(row, 0);
 //         String equipmentName = (String) model.getValueAt(row, 2); // Get equipment name for confirmation
-        
+
 //         int confirm = JOptionPane.showConfirmDialog(
 //             this, 
 //             "Bạn có chắc chắn muốn xóa thiết bị " + equipmentName + "?",
 //             "Xác nhận xóa",
 //             JOptionPane.YES_NO_OPTION
 //         );
-        
+
 //         if (confirm == JOptionPane.YES_OPTION) {
 //             try {
 //                 equipmentDAO.delete(id);
@@ -235,7 +235,7 @@
 //             }
 //         }
 //     }
-    
+
 //     private void editEquipment() {
 //         int row = table.getSelectedRow();
 //         if (row < 0) {
@@ -252,11 +252,11 @@
 //             JTextField tfName = new JTextField(e.getName());
 //             JTextField tfManu = new JTextField(e.getManufacturer());
 //             JTextField tfYear = new JTextField(e.getYearOfUse() + "");
-            
+
 //             // Create status combo box with options and select current status
 //             JComboBox<String> cbStatus = new JComboBox<>(new String[]{"TOT", "BAO_TRI", "HU_HONG"});
 //             cbStatus.setSelectedItem(e.getStatus());
-            
+
 //             JTextField tfImage = new JTextField(e.getImagePath() == null ? "" : e.getImagePath());
 //             JComboBox<String> cbDept = new JComboBox<>();
 
@@ -326,16 +326,12 @@
 //     }
 // }
 
-
-
-
-
-
 package com.example.hospital.ui;
 
 import com.example.hospital.dao.EquipmentDAO;
 import com.example.hospital.models.Equipment;
 import com.example.hospital.util.ImageUtil;
+import com.example.hospital.ui.panels.EquipmentRequestsDialog;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -360,6 +356,7 @@ public class EquipmentPanel extends JPanel {
     private JComboBox<String> cbSearchField;
     private JLabel imagePreview;
     private User currentUser;
+    private JButton btnViewRequests;
 
     public EquipmentPanel(User user) {
         this.currentUser = user;
@@ -389,6 +386,7 @@ public class EquipmentPanel extends JPanel {
             if (ev.getValueIsAdjusting())
                 return;
             int r = table.getSelectedRow();
+            btnViewRequests.setEnabled(r >= 0);
             if (r < 0) {
                 imagePreview.setIcon(null);
                 imagePreview.setText("");
@@ -420,6 +418,8 @@ public class EquipmentPanel extends JPanel {
         JButton btnAdd = new JButton("Thêm");
         JButton btnEdit = new JButton("Sửa");
         JButton btnDelete = new JButton("Xóa");
+        btnViewRequests = new JButton("Xem yêu cầu");
+        btnViewRequests.setEnabled(false);
         JButton btnRefresh = new JButton("Làm mới");
 
         // Search UI (hiển thị cho QL_THIET_BI hoặc TRUONG_KHOA)
@@ -474,8 +474,7 @@ public class EquipmentPanel extends JPanel {
         JPanel panel = new JPanel();
         panel.add(btnAdd);
         panel.add(btnEdit);
-
-        // Only show delete button for QL_THIET_BI role
+        panel.add(btnViewRequests);
         if (currentUser != null && currentUser.isQLThietBi()) {
             panel.add(btnDelete);
         }
@@ -486,6 +485,24 @@ public class EquipmentPanel extends JPanel {
         btnAdd.addActionListener(e -> addEquipment());
         btnEdit.addActionListener(e -> editEquipment());
         btnDelete.addActionListener(e -> deleteEquipment());
+        btnViewRequests.addActionListener(e -> {
+            int viewRow = table.getSelectedRow();
+            if (viewRow < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn thiết bị");
+                return;
+            }
+            int modelRow = table.convertRowIndexToModel(viewRow);
+            try {
+                int equipmentId = (int) model.getValueAt(modelRow, 0);
+                Window parent = SwingUtilities.getWindowAncestor(this);
+                com.example.hospital.ui.panels.EquipmentRequestsDialog dlg = new com.example.hospital.ui.panels.EquipmentRequestsDialog(
+                        parent, equipmentId);
+                dlg.setVisible(true);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Không thể mở danh sách yêu cầu: " + ex.getMessage());
+            }
+        });
         btnRefresh.addActionListener(e -> loadData());
 
         loadData();

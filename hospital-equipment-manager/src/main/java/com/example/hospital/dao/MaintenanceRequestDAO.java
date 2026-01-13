@@ -101,6 +101,21 @@ public class MaintenanceRequestDAO {
         }
     }
 
+    // lấy theo thiết bị
+    public List<MaintenanceRequest> findByEquipment(int equipmentId) throws SQLException {
+        List<MaintenanceRequest> list = new ArrayList<>();
+        String sql = "SELECT * FROM maintenance_requests WHERE equipment_id = ? ORDER BY request_date DESC";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, equipmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(map(rs));
+                }
+            }
+        }
+        return list;
+    }
+
     /**
      * Get the latest plan status for a given request (null if no plan exists)
      */

@@ -345,6 +345,9 @@ public class DeptEquipPanel extends JPanel {
         final JButton btnCreate = new JButton("Tạo yêu cầu");
         btnCreate.setEnabled(false);
         searchPanel.add(btnCreate);
+        final JButton btnViewRequests = new JButton("Xem yêu cầu");
+        btnViewRequests.setEnabled(false);
+        searchPanel.add(btnViewRequests);
         JButton btnClear = new JButton("Xóa");
         searchPanel.add(btnClear);
         add(searchPanel, BorderLayout.NORTH);
@@ -384,12 +387,13 @@ public class DeptEquipPanel extends JPanel {
         split.setResizeWeight(0.75);
         add(split, BorderLayout.CENTER);
 
-        // selection listener to update preview (and enable Create button)
+        // selection listener to update preview (and enable Create and View buttons)
         table.getSelectionModel().addListSelectionListener(ev -> {
             if (ev.getValueIsAdjusting())
                 return;
             int r = table.getSelectedRow();
             btnCreate.setEnabled(r >= 0);
+            btnViewRequests.setEnabled(r >= 0);
             if (r < 0) {
                 imagePreview.setIcon(null);
                 imagePreview.setText("");
@@ -436,6 +440,24 @@ public class DeptEquipPanel extends JPanel {
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Không thể mở form: " + ex.getMessage());
+            }
+        });
+
+        btnViewRequests.addActionListener(e -> {
+            int viewRow = table.getSelectedRow();
+            if (viewRow < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn thiết bị");
+                return;
+            }
+            int modelRow = table.convertRowIndexToModel(viewRow);
+            try {
+                int equipmentId = (int) table.getModel().getValueAt(modelRow, 0);
+                Window parent = SwingUtilities.getWindowAncestor(this);
+                EquipmentRequestsDialog dlg = new EquipmentRequestsDialog(parent, equipmentId);
+                dlg.setVisible(true);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Không thể mở danh sách yêu cầu: " + ex.getMessage());
             }
         });
 
