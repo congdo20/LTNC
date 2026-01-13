@@ -37,29 +37,28 @@ public class MainFrame extends JFrame {
         if (user == null)
             return titles;
 
-        if (user.isAdmin() || user.hasPermission(Permission.MANAGE_ACCOUNTS)) {
+        if (user.hasPermission(Permission.MANAGE_ACCOUNTS)) {
             titles.add("Quản lý tài khoản");
         }
-        if (user.isAdmin() || user.isTruongKhoa() || user.hasPermission(Permission.VIEW_DEPT_EQUIPMENT)) {
+        if (user.isTruongKhoa() || user.hasPermission(Permission.VIEW_DEPT_EQUIPMENT)) {
             titles.add("Thiết bị khoa/viện");
         }
-        if (user.isAdmin() || user.isQLThietBi() || user.hasPermission(Permission.VIEW_EQUIPMENT)) {
+        if (user.isQLThietBi() || user.hasPermission(Permission.VIEW_EQUIPMENT)) {
             titles.add("Thiết bị");
         }
-        if (user.isAdmin() || user.isTruongKhoa() || user.isQLThietBi()
-                || user.hasPermission(Permission.CREATE_REQUEST)) {
+        if (user.isTruongKhoa() || user.isQLThietBi() || user.hasPermission(Permission.CREATE_REQUEST)) {
             titles.add("Yêu cầu bảo trì");
         }
-        if (user.isAdmin() || user.isQLThietBi() || user.hasPermission(Permission.PLAN)) {
+        if (user.isQLThietBi() || user.hasPermission(Permission.PLAN)) {
             // titles.add("Lên kế hoạch");
         }
-        if (user.isAdmin() || user.isQLThietBi() || user.hasPermission(Permission.ASSIGN)) {
+        if (user.isQLThietBi() || user.hasPermission(Permission.ASSIGN)) {
             titles.add("Phân công");
         }
-        if (user.isAdmin() || user.isNvBaoTri() || user.hasPermission(Permission.TASK)) {
+        if (user.isNvBaoTri() || user.hasPermission(Permission.TASK)) {
             titles.add("Nhiệm vụ");
         }
-        if (user.isAdmin() || user.isNvBaoTri() || user.hasPermission(Permission.REPORT)) {
+        if (user.isNvBaoTri() || user.hasPermission(Permission.REPORT)) {
             titles.add("Báo cáo");
         }
         return titles;
