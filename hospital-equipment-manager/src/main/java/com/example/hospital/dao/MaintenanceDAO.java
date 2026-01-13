@@ -181,6 +181,86 @@ public class MaintenanceDAO {
         return list;
     }
 
+    /**
+     * Find maintenance plans waiting for approval filtered by department id.
+     * This ensures equipment managers only see tasks for their department.
+     */
+    public List<MaintenanceTask> findPlansWaitingForApprovalForDepartment(int departmentId) throws SQLException {
+        List<MaintenanceTask> list = new ArrayList<>();
+        String sql = "SELECT p.* FROM maintenance_plans p JOIN maintenance_requests r ON p.request_id = r.id "
+                + "WHERE p.status = 'CHO_NGHIEM_THU' AND r.department_id = ? ORDER BY p.scheduled_start DESC";
+        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, departmentId);
+            try (ResultSet rs = p.executeQuery()) {
+                while (rs.next()) {
+                    MaintenanceTask m = new MaintenanceTask();
+                    m.setId(rs.getInt("id"));
+                    m.setEquipmentId(rs.getInt("equipment_id"));
+                    Date d = rs.getDate("scheduled_start");
+                    m.setScheduleDate(d == null ? null : d.toLocalDate());
+                    String status = null;
+                    try {
+                        status = rs.getString("status");
+                    } catch (Exception ex) {
+                    }
+                    m.setCompleted("HOAN_THANH".equals(status));
+                    m.setNote(rs.getString("note"));
+                    m.setAssignedTo("");
+                    try {
+                        m.setRequestId(rs.getInt("request_id"));
+                    } catch (Exception ex) {
+                    }
+                    try {
+                        m.setPlannerId(rs.getInt("planner_id"));
+                    } catch (Exception ex) {
+                    }
+                    list.add(m);
+                }
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Find maintenance plans for a specific department (all statuses). This lets
+     * equipment managers see all tasks that belong to their department.
+     */
+    public List<MaintenanceTask> findPlansByDepartment(int departmentId) throws SQLException {
+        List<MaintenanceTask> list = new ArrayList<>();
+        String sql = "SELECT p.* FROM maintenance_plans p JOIN maintenance_requests r ON p.request_id = r.id "
+                + "WHERE r.department_id = ? ORDER BY p.scheduled_start DESC";
+        try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, departmentId);
+            try (ResultSet rs = p.executeQuery()) {
+                while (rs.next()) {
+                    MaintenanceTask m = new MaintenanceTask();
+                    m.setId(rs.getInt("id"));
+                    m.setEquipmentId(rs.getInt("equipment_id"));
+                    Date d = rs.getDate("scheduled_start");
+                    m.setScheduleDate(d == null ? null : d.toLocalDate());
+                    String status = null;
+                    try {
+                        status = rs.getString("status");
+                    } catch (Exception ex) {
+                    }
+                    m.setCompleted("HOAN_THANH".equals(status));
+                    m.setNote(rs.getString("note"));
+                    m.setAssignedTo("");
+                    try {
+                        m.setRequestId(rs.getInt("request_id"));
+                    } catch (Exception ex) {
+                    }
+                    try {
+                        m.setPlannerId(rs.getInt("planner_id"));
+                    } catch (Exception ex) {
+                    }
+                    list.add(m);
+                }
+            }
+        }
+        return list;
+    }
+
     public void accept(int id, String acceptedBy, String note, String assignedTo) throws SQLException {
         String sql = "UPDATE maintenance_plans SET status = 'DANG_THUC_HIEN', note = ? WHERE id = ?";
         try (Connection c = DBUtil.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {

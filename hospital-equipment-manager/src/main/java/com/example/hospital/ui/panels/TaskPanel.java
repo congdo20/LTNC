@@ -57,16 +57,43 @@ public class TaskPanel extends JPanel {
         try {
             model.setRowCount(0);
             java.util.List<com.example.hospital.models.MaintenanceTask> list;
+
+            System.out.println("[TASKS] Loading tasks for user: "
+                    + (user == null ? "(null)" : user.getUsername() + " role=" + user.getRole()));
+
             if (user != null && user.isNvBaoTri()) {
                 // Technician: show tasks assigned to them
                 list = maintDao.findPlansAssignedToTechnician(user.getId());
             } else if (user != null && user.isQLThietBi()) {
-                // Equipment manager: show tasks waiting for approval (CHO_NGHIEM_THU)
-                list = maintDao.findPlansWaitingForApproval();
+                // Equipment manager: show all tasks for their department (any status)
+                if (user.getDepartmentId() != null) {
+                    list = maintDao.findPlansByDepartment(user.getDepartmentId());
+                    System.out.println("[TASKS] Dept (" + user.getDepartmentId() + ") total tasks count = "
+                            + (list == null ? 0 : list.size()));
+                    if (list == null || list.isEmpty()) {
+                        System.out.println("[TASKS] No tasks in dept " + user.getDepartmentId()
+                                + ", trying global pending approval tasks");
+                        java.util.List<com.example.hospital.models.MaintenanceTask> globalPending = maintDao
+                                .findPlansWaitingForApproval();
+                        if (globalPending != null && !globalPending.isEmpty()) {
+                            list = globalPending;
+                            System.out.println("[TASKS] Showing " + list.size() + " global pending tasks instead.");
+                        } else {
+                            list = maintDao.findAll();
+                            System.out.println("[TASKS] No global pending tasks, falling back to all plans ("
+                                    + (list == null ? 0 : list.size()) + ")");
+                        }
+                    }
+                } else {
+                    // fallback: show all plans if no department assigned
+                    list = maintDao.findAll();
+                }
             } else {
                 // Other roles: show all plans
                 list = maintDao.findAll();
             }
+
+            System.out.println("[TASKS] Loaded " + (list == null ? 0 : list.size()) + " tasks for display.");
 
             for (com.example.hospital.models.MaintenanceTask m : list) {
                 String eqName = String.valueOf(m.getEquipmentId());
