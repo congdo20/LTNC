@@ -1,7 +1,6 @@
 package com.example.hospital.ui.panels;
 
 import com.example.hospital.dao.MaintenanceRequestDAO;
-import com.example.hospital.dao.EquipmentDAO;
 import com.example.hospital.dao.UserDAO;
 import com.example.hospital.models.MaintenanceRequest;
 
@@ -15,13 +14,18 @@ public class EquipmentRequestsDialog extends JDialog {
 
     private JTable table;
     private final MaintenanceRequestDAO reqDao = new MaintenanceRequestDAO();
-    private final EquipmentDAO equipmentDao = new EquipmentDAO();
     private final UserDAO userDao = new UserDAO();
     private final int equipmentId;
+    private final Integer departmentId; // optional department filter
 
     public EquipmentRequestsDialog(Window parent, int equipmentId) {
+        this(parent, equipmentId, null);
+    }
+
+    public EquipmentRequestsDialog(Window parent, int equipmentId, Integer departmentId) {
         super(parent, "Yêu cầu cho thiết bị", ModalityType.APPLICATION_MODAL);
         this.equipmentId = equipmentId;
+        this.departmentId = departmentId;
         setSize(700, 400);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
@@ -45,7 +49,12 @@ public class EquipmentRequestsDialog extends JDialog {
 
     private void loadData() {
         try {
-            List<MaintenanceRequest> list = reqDao.findByEquipment(equipmentId);
+            List<MaintenanceRequest> list;
+            if (departmentId != null && departmentId > 0) {
+                list = reqDao.findByEquipmentAndDepartment(equipmentId, departmentId);
+            } else {
+                list = reqDao.findByEquipment(equipmentId);
+            }
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             model.setRowCount(0);
 

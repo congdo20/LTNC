@@ -495,8 +495,12 @@ public class EquipmentPanel extends JPanel {
             try {
                 int equipmentId = (int) model.getValueAt(modelRow, 0);
                 Window parent = SwingUtilities.getWindowAncestor(this);
-                com.example.hospital.ui.panels.EquipmentRequestsDialog dlg = new com.example.hospital.ui.panels.EquipmentRequestsDialog(
-                        parent, equipmentId);
+                EquipmentRequestsDialog dlg;
+                if (currentUser != null && currentUser.isTruongKhoa() && currentUser.getDepartmentId() != null) {
+                    dlg = new EquipmentRequestsDialog(parent, equipmentId, currentUser.getDepartmentId());
+                } else {
+                    dlg = new EquipmentRequestsDialog(parent, equipmentId);
+                }
                 dlg.setVisible(true);
             } catch (Exception ex) {
                 ex.printStackTrace();

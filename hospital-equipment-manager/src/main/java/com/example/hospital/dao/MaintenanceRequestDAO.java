@@ -116,6 +116,23 @@ public class MaintenanceRequestDAO {
         return list;
     }
 
+    // lấy theo thiết bị và khoa/phòng (dùng cho trưởng khoa)
+    public List<MaintenanceRequest> findByEquipmentAndDepartment(int equipmentId, int departmentId)
+            throws SQLException {
+        List<MaintenanceRequest> list = new ArrayList<>();
+        String sql = "SELECT * FROM maintenance_requests WHERE equipment_id = ? AND department_id = ? ORDER BY request_date DESC";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, equipmentId);
+            ps.setInt(2, departmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(map(rs));
+                }
+            }
+        }
+        return list;
+    }
+
     /**
      * Get the latest plan status for a given request (null if no plan exists)
      */
