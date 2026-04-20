@@ -7,7 +7,7 @@ import java.sql.SQLException;
 public class DBUtil {
     // Allow overriding via environment variables for safer local config
     private static final String URL = System.getenv().getOrDefault("DB_URL",
-            "jdbc:mysql://localhost:3306/hospital_equipment?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true");
+            "jdbc:mysql://localhost:3306/hospital_equipment2?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true");
     private static final String USER = System.getenv().getOrDefault("DB_USER", "root");
     private static final String PASS = System.getenv().getOrDefault("DB_PASS", "Do200102!"); // <-- change this or set
                                                                                              // DB_PASS

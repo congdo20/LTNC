@@ -37,6 +37,17 @@ public class MainFrame extends JFrame {
         if (user == null)
             return titles;
 
+        // if (user.isAdmin()) {
+        // titles.add("Quản lý tài khoản");
+        // // titles.add("Thiết bị khoa/viện");
+        // // titles.add("Thiết bị");
+        // // titles.add("Yêu cầu bảo trì");
+        // // titles.add("Phân công");
+        // // titles.add("Nhiệm vụ");
+        // // titles.add("Báo cáo");
+        // return titles; // Admin thấy tất cả, không cần kiểm tra thêm
+        // }
+
         if (user.hasPermission(Permission.MANAGE_ACCOUNTS)) {
             titles.add("Quản lý tài khoản");
         }
@@ -151,6 +162,25 @@ public class MainFrame extends JFrame {
         dlg.setSize(600, 400);
         dlg.setLocationRelativeTo(this);
         dlg.setVisible(true);
+    }
+
+    public void updateCurrentUser(User updatedUser) {
+        this.currentUser = updatedUser;
+
+        // Cập nhật lại header
+        Component northComp = getContentPane().getComponent(0);
+        if (northComp instanceof JPanel) {
+            JPanel header = (JPanel) northComp;
+            Component westComp = header.getComponent(0);
+            if (westComp instanceof JLabel) {
+                JLabel lbUser = (JLabel) westComp;
+                lbUser.setText("Người dùng: " + currentUser.getFullname() +
+                        "  |  Chức vụ: " + currentUser.getRole());
+            }
+        }
+
+        // Refresh lại tabs
+        refreshTabs();
     }
 
     private void doLogout() {

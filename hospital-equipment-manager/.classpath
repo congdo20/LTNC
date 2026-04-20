@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17">
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/JRE [21.0.10]"/>
+	<classpathentry kind="src" output="target/test-classes" path="target/generated-test-sources/test-annotations">
 		<attributes>
+			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="ignore_optional_problems" value="true"/>
+			<attribute name="m2e-apt" value="true"/>
+			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="target/generated-sources/annotations">
@@ -26,32 +31,196 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="C:\Users\trinhdo\Downloads\mysql-connector-j-9.6.0\mysql-connector-j-9.6.0.jar"/>
-	<classpathentry excluding="**" kind="src" output="target/classes" path="src/main/resources">
+	<classpathentry kind="lib" path="/Users/trinhdo/Downloads/mysql-connector-j-9.6.0/mysql-connector-j-9.6.0.jar"/>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/itextpdf/barcodes/7.2.5/barcodes-7.2.5.jar">
 		<attributes>
+			<attribute name="maven.artifactId" value="barcodes"/>
 			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="optional" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="7.2.5"/>
+			<attribute name="maven.groupId" value="com.itextpdf"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry excluding="**" kind="src" output="target/test-classes" path="src/test/resources">
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/itextpdf/font-asian/7.2.5/font-asian-7.2.5.jar">
 		<attributes>
+			<attribute name="maven.artifactId" value="font-asian"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="7.2.5"/>
+			<attribute name="maven.groupId" value="com.itextpdf"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/itextpdf/forms/7.2.5/forms-7.2.5.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="forms"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="7.2.5"/>
+			<attribute name="maven.groupId" value="com.itextpdf"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/itextpdf/hyph/7.2.5/hyph-7.2.5.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="hyph"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="7.2.5"/>
+			<attribute name="maven.groupId" value="com.itextpdf"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/itextpdf/io/7.2.5/io-7.2.5.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="io"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="7.2.5"/>
+			<attribute name="maven.groupId" value="com.itextpdf"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/itextpdf/commons/7.2.5/commons-7.2.5.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="commons"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="7.2.5"/>
+			<attribute name="maven.groupId" value="com.itextpdf"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/itextpdf/kernel/7.2.5/kernel-7.2.5.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="kernel"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="7.2.5"/>
+			<attribute name="maven.groupId" value="com.itextpdf"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/org/bouncycastle/bcpkix-jdk15on/1.70/bcpkix-jdk15on-1.70.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="bcpkix-jdk15on"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="1.70"/>
+			<attribute name="maven.groupId" value="org.bouncycastle"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/org/bouncycastle/bcutil-jdk15on/1.70/bcutil-jdk15on-1.70.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="bcutil-jdk15on"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="1.70"/>
+			<attribute name="maven.groupId" value="org.bouncycastle"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.70/bcprov-jdk15on-1.70.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="bcprov-jdk15on"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="1.70"/>
+			<attribute name="maven.groupId" value="org.bouncycastle"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/itextpdf/layout/7.2.5/layout-7.2.5.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="layout"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="7.2.5"/>
+			<attribute name="maven.groupId" value="com.itextpdf"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/itextpdf/pdfa/7.2.5/pdfa-7.2.5.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="pdfa"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="7.2.5"/>
+			<attribute name="maven.groupId" value="com.itextpdf"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/itextpdf/sign/7.2.5/sign-7.2.5.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="sign"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="7.2.5"/>
+			<attribute name="maven.groupId" value="com.itextpdf"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/itextpdf/styled-xml-parser/7.2.5/styled-xml-parser-7.2.5.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="styled-xml-parser"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="7.2.5"/>
+			<attribute name="maven.groupId" value="com.itextpdf"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/itextpdf/svg/7.2.5/svg-7.2.5.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="svg"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="7.2.5"/>
+			<attribute name="maven.groupId" value="com.itextpdf"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/mysql/mysql-connector-j/9.0.0/mysql-connector-j-9.0.0.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="mysql-connector-j"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="9.0.0"/>
+			<attribute name="maven.groupId" value="com.mysql"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/com/google/protobuf/protobuf-java/4.26.1/protobuf-java-4.26.1.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="protobuf-java"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="4.26.1"/>
+			<attribute name="maven.groupId" value="com.google.protobuf"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/org/slf4j/slf4j-simple/2.0.9/slf4j-simple-2.0.9.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="slf4j-simple"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="2.0.9"/>
+			<attribute name="maven.groupId" value="org.slf4j"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="slf4j-api"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.version" value="2.0.9"/>
+			<attribute name="maven.groupId" value="org.slf4j"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/junit/junit/4.13.2/junit-4.13.2.jar">
+		<attributes>
+			<attribute name="maven.artifactId" value="junit"/>
 			<attribute name="maven.pomderived" value="true"/>
 			<attribute name="test" value="true"/>
-			<attribute name="optional" value="true"/>
+			<attribute name="maven.scope" value="test"/>
+			<attribute name="maven.version" value="4.13.2"/>
+			<attribute name="maven.groupId" value="junit"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+	<classpathentry kind="lib" path="/Users/trinhdo/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar">
 		<attributes>
+			<attribute name="maven.artifactId" value="hamcrest-core"/>
 			<attribute name="maven.pomderived" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="src" output="target/test-classes" path="target/generated-test-sources/test-annotations">
-		<attributes>
-			<attribute name="optional" value="true"/>
-			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="ignore_optional_problems" value="true"/>
-			<attribute name="m2e-apt" value="true"/>
 			<attribute name="test" value="true"/>
+			<attribute name="maven.scope" value="test"/>
+			<attribute name="maven.version" value="1.3"/>
+			<attribute name="maven.groupId" value="org.hamcrest"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="output" path="target/classes"/>

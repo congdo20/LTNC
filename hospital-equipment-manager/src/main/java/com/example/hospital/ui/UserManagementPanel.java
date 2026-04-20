@@ -7,7 +7,6 @@ import com.example.hospital.models.Permission;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
-import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
@@ -221,22 +220,23 @@ public class UserManagementPanel extends JPanel {
             loadData();
 
             // ✅ Nếu edit chính mình, reload permissions từ database
-            if (mainFrame != null && u != null && u.getId() == mainFrame.getCurrentUser().getId()) {
+            if (mainFrame != null && u != null && mainFrame.getCurrentUser() != null
+                    && u.getId() == mainFrame.getCurrentUser().getId()) {
                 try {
                     // Reload permissions của current user từ database
                     Map<String, Boolean> freshPerms = userDAO.getPermissions(u.getId());
                     mainFrame.getCurrentUser().setPermissions(freshPerms);
-                    System.out.println("[PERMISSIONS] Reloaded for user: " + u.getUsername());
+                    System.out.println("[PERMISSIONS] ✅ Reloaded for user: " + u.getUsername());
                     System.out.println("[PERMISSIONS] Fresh permissions: " + freshPerms);
                 } catch (Exception ex) {
-                    System.err.println("[PERMISSIONS] Error reloading: " + ex.getMessage());
+                    System.err.println("[PERMISSIONS] ❌ Error reloading: " + ex.getMessage());
                     ex.printStackTrace();
                 }
             }
 
             // ✅ Refresh tabs nếu permissions thay đổi
             if (mainFrame != null) {
-                System.out.println("[DIALOG] Calling refreshTabs()");
+                System.out.println("[DIALOG] ✅ Calling refreshTabs()");
                 mainFrame.refreshTabs();
             }
         } else {
@@ -294,13 +294,13 @@ public class UserManagementPanel extends JPanel {
 
         private User user;
         private UserDAO dao;
-        private MainFrame mainFrame; // ✅ Để refresh tabs sau khi save
+        private MainFrame mainFrame; 
 
         public UserDialog(Window owner, User u, UserDAO dao, MainFrame mainFrame) {
             super(owner, "User", ModalityType.APPLICATION_MODAL);
             this.dao = dao;
             this.user = (u == null) ? new User() : u;
-            this.mainFrame = mainFrame; // ✅ Lưu reference
+            this.mainFrame = mainFrame; 
 
             initUI();
             fillData();
@@ -482,6 +482,24 @@ public class UserManagementPanel extends JPanel {
                         dao.update(user, password);
                         // Update permissions after user update
                         dao.setPermissions(user.getId(), user.getPermissions());
+
+                        
+                        if (mainFrame != null && mainFrame.getCurrentUser() != null
+                                && mainFrame.getCurrentUser().getId() == user.getId()) {
+                            try {
+                                // Reload lại user từ database
+                                User updatedUser = dao.findById(user.getId());
+                                if (updatedUser != null) {
+                                    mainFrame.updateCurrentUser(updatedUser);
+                                    System.out.println("[PERMISSIONS] ✅ Reloaded current user after permission change");
+                                } else {
+                                    System.err.println("[PERMISSIONS] ❌ Failed to reload user from DB");
+                                }
+                            } catch (SQLException ex) {
+                                System.err.println("[PERMISSIONS] ❌ Error reloading user: " + ex.getMessage());
+                                ex.printStackTrace();
+                            }
+                        }
                     }
                     saved = true;
                     dispose();
